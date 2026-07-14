@@ -4,7 +4,8 @@
  */
 
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { AppProvider } from './contexts/AppContext';
+import { ReactNode } from 'react';
+import { AppProvider, useAppContext } from './contexts/AppContext';
 import { ToastProvider } from './contexts/ToastContext';
 import Layout from './components/Layout';
 import Dashboard from './pages/Dashboard';
@@ -17,6 +18,20 @@ import Websites from './pages/Websites';
 import Reports from './pages/Reports';
 import Settings from './pages/Settings';
 import Player from './pages/Player';
+import Login from './pages/Login';
+
+function RequireAuth({ children }: { children: ReactNode }) {
+  const { user, loading } = useAppContext();
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-suncoast-black text-suncoast-warm-gray font-mono uppercase tracking-widest text-sm">
+        Loading Suncoast...
+      </div>
+    );
+  }
+  if (!user) return <Navigate to="/login" replace />;
+  return <>{children}</>;
+}
 
 export default function App() {
   return (
@@ -25,7 +40,15 @@ export default function App() {
         <BrowserRouter>
           <Routes>
             <Route path="/play/:id" element={<Player />} />
-            <Route path="/" element={<Layout />}>
+            <Route path="/login" element={<Login />} />
+            <Route
+              path="/"
+              element={
+                <RequireAuth>
+                  <Layout />
+                </RequireAuth>
+              }
+            >
               <Route index element={<Dashboard />} />
               <Route path="screens" element={<Screens />} />
               <Route path="screens/:id" element={<ManageScreen />} />

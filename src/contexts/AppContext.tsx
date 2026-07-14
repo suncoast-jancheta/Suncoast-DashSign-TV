@@ -19,10 +19,17 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     async function load() {
-      await dataService.init();
-      const workspace = await dataService.getWorkspace();
-      const user = await dataService.getUser();
-      setState({ workspace, user, loading: false });
+      // Player and login pages don't need (or have) an admin session.
+      if (!dataService.isAuthenticated()) {
+        setState({ workspace: null, user: null, loading: false });
+        return;
+      }
+      try {
+        const [workspace, user] = await Promise.all([dataService.getWorkspace(), dataService.getUser()]);
+        setState({ workspace, user, loading: false });
+      } catch {
+        setState({ workspace: null, user: null, loading: false });
+      }
     }
     load();
   }, []);

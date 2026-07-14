@@ -1,0 +1,37 @@
+{
+  // Cloudflare Worker configuration for Suncoast DashSign TV.
+  // Before deploying:
+  //   1. npx wrangler d1 create suncoast-dashsign      -> paste database_id below
+  //   2. npx wrangler r2 bucket create suncoast-dashsign-media
+  //   3. npx wrangler secret put ADMIN_PASSWORD        -> choose your admin login password
+  //   4. npm run deploy
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "suncoast-dashsign",
+  "main": "worker/index.ts",
+  "compatibility_date": "2025-06-01",
+  "assets": {
+    "directory": "./dist",
+    "binding": "ASSETS",
+    "not_found_handling": "single-page-application",
+    "run_worker_first": ["/api/*", "/media/*"]
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "suncoast-dashsign",
+      "database_id": "REPLACE_WITH_YOUR_D1_DATABASE_ID"
+    }
+  ],
+  "r2_buckets": [
+    {
+      "binding": "MEDIA",
+      "bucket_name": "suncoast-dashsign-media"
+    }
+  ],
+  "vars": {
+    "WORKSPACE_NAME": "Suncoast Signage"
+  },
+  "observability": {
+    "enabled": true
+  }
+}
