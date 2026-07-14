@@ -14,6 +14,12 @@ export default defineConfig(() => {
     server: {
       host: true,
       port: 3000,
+      // During local dev, API and media requests go to the wrangler dev server
+      // (npm run dev:worker) which provides local D1/R2 emulation.
+      proxy: {
+        '/api': 'http://localhost:8787',
+        '/media': 'http://localhost:8787',
+      },
       // HMR is disabled in AI Studio via DISABLE_HMR env var.
       // Do not modify—file watching is disabled to prevent flickering during agent edits.
       hmr: process.env.DISABLE_HMR !== 'true',
