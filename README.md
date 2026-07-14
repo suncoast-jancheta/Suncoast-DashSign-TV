@@ -58,16 +58,26 @@ The database tables are created automatically on first use — no manual SQL nee
 You can attach a custom domain later in the Cloudflare dashboard
 (Workers & Pages → your worker → Settings → Domains & Routes).
 
-## Local development
+## Run locally
 
 ```bash
-cp .dev.vars.example .dev.vars   # set a local ADMIN_PASSWORD
-npm run dev:worker               # terminal 1: API with local D1/R2 emulation (port 8787)
-npm run dev                      # terminal 2: frontend with hot reload (port 3000)
+npm install
+npm start
 ```
 
-Open http://localhost:3000. The Vite dev server proxies `/api` and `/media`
-to the local worker.
+Then open http://localhost:8787 and sign in — the default local password is
+**suncoast** (created in `.dev.vars` on first start; edit that file to change
+it, then restart). `npm start` builds the app and runs it with local D1/R2
+emulation; data persists in the `.wrangler` folder between restarts.
+
+The server listens on your network too, so a TV or phone on the same Wi-Fi
+can open `http://<your-computer-ip>:8787/play/<screen-id>`. For screens at
+other locations, deploy to Cloudflare (above) — localhost can't be reached
+from outside your network.
+
+For frontend development with hot reload, additionally run `npm run dev` in a
+second terminal and use http://localhost:3000 (it proxies `/api` and `/media`
+to the worker).
 
 ## Useful commands
 

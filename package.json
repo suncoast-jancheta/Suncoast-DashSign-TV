@@ -4,6 +4,8 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
+    "prestart": "node -e \"const fs=require('fs');if(!fs.existsSync('.dev.vars')){fs.copyFileSync('.dev.vars.example','.dev.vars');console.log('Created .dev.vars — login password is: suncoast (edit .dev.vars to change it)')}\" && npm run build",
+    "start": "wrangler dev --port 8787 --ip 0.0.0.0",
     "dev": "vite --port=3000 --host=0.0.0.0",
     "dev:worker": "wrangler dev --port 8787",
     "build": "vite build",
