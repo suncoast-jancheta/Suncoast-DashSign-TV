@@ -19,7 +19,7 @@
     {
       "binding": "DB",
       "database_name": "suncoast-dashsign",
-      "database_id": "REPLACE_WITH_YOUR_D1_DATABASE_ID"
+      "database_id": "1ea9a80a-d752-429b-b57b-9e76d808a78c"
     }
   ],
   "r2_buckets": [
