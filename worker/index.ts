@@ -17,6 +17,10 @@ export interface Env {
   ASSETS: Fetcher;
   ADMIN_PASSWORD?: string;
   WORKSPACE_NAME?: string;
+  // Set automatically by scripts/prepare-local.mjs during local dev: the
+  // machine's LAN origin (e.g. http://192.168.1.23:8787) so the admin UI can
+  // show player links that TVs on the same network can open. Unset in prod.
+  LAN_ORIGIN?: string;
 }
 
 const ONLINE_WINDOW_MS = 90_000; // player checks in every 30s
@@ -307,6 +311,7 @@ app.get('/api/me', (c) =>
   c.json({
     workspace: { id: 'ws-1', name: c.env.WORKSPACE_NAME || 'Suncoast Signage' },
     user: { id: 'u-1', email: 'admin', role: 'Admin', name: 'Admin' },
+    playerOrigin: c.env.LAN_ORIGIN || null,
   }),
 );
 

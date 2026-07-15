@@ -4,6 +4,8 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
+    "prestart": "node scripts/prepare-local.mjs && npm run build",
+    "start": "wrangler dev --port 8787 --ip 0.0.0.0",
     "dev": "vite --port=3000 --host=0.0.0.0",
     "dev:worker": "wrangler dev --port 8787",
     "build": "vite build",
@@ -31,7 +33,7 @@
     "vite": "^6.2.3"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "^4.20250601.0",
+    "@cloudflare/workers-types": "^5.20260708.1",
     "@types/node": "^22.14.0",
     "@types/react": "^19",
     "@types/react-dom": "^19",

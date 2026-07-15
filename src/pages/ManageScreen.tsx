@@ -22,15 +22,18 @@ export default function ManageScreen() {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'content' | 'websites'>('content');
   const [hasUnsaved, setHasUnsaved] = useState(false);
+  const [playerOrigin, setPlayerOrigin] = useState(window.location.origin);
 
   useEffect(() => {
     async function load() {
       if (!id) return;
-      const [s, c, w] = await Promise.all([
+      const [s, c, w, origin] = await Promise.all([
         dataService.getScreen(id),
         dataService.getContent(),
-        dataService.getWebsites()
+        dataService.getWebsites(),
+        dataService.getPlayerOrigin()
       ]);
+      setPlayerOrigin(origin);
       if (s) {
         setScreen(s);
         setPlaylist(s.playlist || []);
@@ -130,13 +133,13 @@ export default function ManageScreen() {
                   <code className="font-mono text-[10px] text-suncoast-gold select-all">{screen.ipAddress || '192.168.1.100'}</code>
                 </div>
                 <div className="flex items-center gap-2 bg-suncoast-black border border-white/10 px-2 py-1 w-fit">
-                  <span className="font-mono text-[10px] text-suncoast-warm-gray uppercase tracking-widest select-none">WEB PLAYER (PHONE):</span>
-                  <code className="font-mono text-[10px] text-suncoast-gold select-all">{window.location.origin}/play/{screen.id}</code>
+                  <span className="font-mono text-[10px] text-suncoast-warm-gray uppercase tracking-widest select-none">PLAYER LINK (TV / PHONE):</span>
+                  <code className="font-mono text-[10px] text-suncoast-gold select-all">{playerOrigin}/play/{screen.id}</code>
                 </div>
               </div>
             </div>
             <div className="hidden sm:block p-1 bg-white/90">
-               <QRCodeSVG value={`${window.location.origin}/play/${screen.id}`} size={72} />
+               <QRCodeSVG value={`${playerOrigin}/play/${screen.id}`} size={72} />
             </div>
           </div>
         </div>

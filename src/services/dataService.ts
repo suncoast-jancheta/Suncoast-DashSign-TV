@@ -17,8 +17,14 @@ class ApiError extends Error {
   }
 }
 
+interface Me {
+  workspace: Workspace;
+  user: User;
+  playerOrigin?: string | null;
+}
+
 class DataService {
-  private meCache: { workspace: Workspace; user: User } | null = null;
+  private meCache: Me | null = null;
 
   getToken(): string | null {
     return localStorage.getItem(TOKEN_KEY);
@@ -69,9 +75,25 @@ class DataService {
 
   private async getMe() {
     if (!this.meCache) {
-      this.meCache = await this.request<{ workspace: Workspace; user: User }>('/api/me');
+      this.meCache = await this.request<Me>('/api/me');
     }
     return this.meCache;
+  }
+
+  /**
+   * Base URL to advertise for player links/QR codes. During local dev the
+   * server knows the machine's LAN address (LAN_ORIGIN), which devices on the
+   * same network can reach — unlike localhost. In production it's the site's
+   * own origin.
+   */
+  async getPlayerOrigin(): Promise<string> {
+    try {
+      const me = await this.getMe();
+      if (me.playerOrigin) return me.playerOrigin;
+    } catch {
+      // fall through to current origin
+    }
+    return window.location.origin;
   }
 
   async getWorkspace(): Promise<Workspace> {

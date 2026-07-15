@@ -1,3 +1,4 @@
-# Local development secrets for `npm run dev:worker` (wrangler dev).
-# Copy to .dev.vars — never commit .dev.vars.
-ADMIN_PASSWORD="choose-a-strong-password"
+# Local development secrets for `npm start` / `npm run dev:worker` (wrangler dev).
+# This file is copied to .dev.vars automatically on first `npm start`.
+# Edit .dev.vars to change your local admin login password. Never commit .dev.vars.
+ADMIN_PASSWORD="suncoast"
