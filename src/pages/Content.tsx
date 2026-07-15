@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { dataService } from '../services/dataService';
 import { MediaContent, Folder } from '../types';
-import { Upload, FolderPlus, Search, Image as ImageIcon, Video, CheckSquare, Trash2, Folder as FolderIcon } from 'lucide-react';
+import { Upload, FolderPlus, Search, Image as ImageIcon, Video, CheckSquare, Trash2, Folder as FolderIcon, Download } from 'lucide-react';
 import { formatBytes } from '../lib/utils';
 import { TacticalPanel } from '../components/TacticalPanel';
 import { TacticalButton } from '../components/TacticalButton';
@@ -173,6 +173,16 @@ export default function Content() {
                       <CheckSquare size={14} />
                     </div>
                   </div>
+
+                  <a
+                    href={`${item.url}${item.url.includes('?') ? '&' : '?'}download=1`}
+                    download={item.name}
+                    onClick={(e) => e.stopPropagation()}
+                    title="Download file"
+                    className="absolute top-2 right-2 w-6 h-6 flex items-center justify-center border border-white/30 bg-suncoast-black/80 text-white opacity-0 group-hover:opacity-100 hover:border-suncoast-gold hover:text-suncoast-gold transition-all rounded-none"
+                  >
+                    <Download size={13} />
+                  </a>
 
                   <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/90 to-transparent p-3 pt-8">
                     <p className="text-white text-sm font-sans font-medium truncate">{item.name}</p>

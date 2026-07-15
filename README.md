@@ -10,7 +10,8 @@ Runs entirely on Cloudflare:
 
 ## How it works
 
-1. Open the admin dashboard (no login required).
+1. Sign in to the admin dashboard (default account: **admin / Suncoast#1234** —
+   change it in Settings → My Account).
 2. Upload images/videos in **Content**, add web pages in **Websites**.
 3. Create a **Screen** for each TV/location and build its playlist
    (or put screens in a **Group** to control many screens with one playlist).
@@ -49,13 +50,10 @@ npm run deploy
 ```
 
 Wrangler prints your app URL (e.g. `https://suncoast-dashsign.<you>.workers.dev`).
-Open it and start adding screens. The database tables are created automatically
-on first use — no manual SQL needed.
-
-> **Note:** the app has no login — anyone with the URL can manage your screens
-> and content. That's fine on a private network; for a public Cloudflare
-> deployment, consider putting [Cloudflare Access](https://developers.cloudflare.com/cloudflare-one/policies/access/)
-> in front of the admin URL (free for small teams) if you need to restrict it.
+Open it, sign in with **admin / Suncoast#1234**, and **change the password
+immediately** (Settings → My Account) since the URL is on the public internet.
+The database tables and the default admin account are created automatically on
+first use — no manual SQL needed.
 
 You can attach a custom domain later in the Cloudflare dashboard
 (Workers & Pages → your worker → Settings → Domains & Routes).
@@ -67,9 +65,9 @@ npm install
 npm start
 ```
 
-Then open http://localhost:8787 — no login needed. `npm start` builds the app
-and runs it with local D1/R2 emulation; data persists in the `.wrangler`
-folder between restarts.
+Then open http://localhost:8787 and sign in with **admin / Suncoast#1234**.
+`npm start` builds the app and runs it with local D1/R2 emulation; data
+persists in the `.wrangler` folder between restarts.
 
 The server listens on your network too, so a TV or phone on the same Wi-Fi
 can open `http://<your-computer-ip>:8787/play/<screen-id>`. For screens at
@@ -95,9 +93,11 @@ to the worker).
   caching and HTTP range support (so videos can seek/stream). D1 holds only the
   metadata — D1 rows can't hold large video files, which is why R2 is used for
   the bytes; this is the standard Cloudflare pairing.
-- All endpoints are public — the player endpoints (`/api/player/*`) and media
-  so any TV can display a screen from just its link, and the management API
-  so the dashboard works without a login.
+- The player endpoints (`/api/player/*`) and media are public so any TV can
+  display a screen from just its link; all management endpoints require a
+  signed-in user. Accounts live in D1 (PBKDF2-hashed passwords); **Members**
+  can only see and control the screens an admin grants them, while **Admins**
+  manage everything including users and workspace settings.
 - A screen that belongs to a group plays the **group's** playlist; its own
   playlist is used as a fallback when the group playlist is empty.
 - A screen counts as **Online** if it has checked in within the last 90 seconds.

@@ -99,6 +99,28 @@ export default function ManageScreen() {
     }
   };
 
+  const togglePlayFull = (index: number, playFull: boolean) => {
+    const items = Array.from(playlist);
+    const item = items[index];
+    if (item) {
+      items[index] = Object.assign({}, item, { playFull });
+      setPlaylist(items);
+      setHasUnsaved(true);
+    }
+  };
+
+  const changeDeliveryMode = async (mode: 'stream' | 'download') => {
+    if (!screen) return;
+    const updated = await dataService.updateScreen(screen.id, { deliveryMode: mode });
+    setScreen(updated);
+    toast(
+      mode === 'download'
+        ? 'Screen will download files to the device and play them locally'
+        : 'Screen will stream files from the server',
+      'success'
+    );
+  };
+
   const handleSave = async () => {
     if (!screen) return;
     setLoading(true);
@@ -144,6 +166,18 @@ export default function ManageScreen() {
           </div>
         </div>
         <div className="flex items-center gap-4">
+          <div className="hidden md:flex flex-col gap-1">
+            <span className="font-mono text-[10px] text-suncoast-warm-gray uppercase tracking-widest">Playback Source</span>
+            <select
+              value={screen.deliveryMode ?? 'stream'}
+              onChange={(e) => changeDeliveryMode(e.target.value as 'stream' | 'download')}
+              className="px-2 py-1.5 bg-suncoast-black border border-white/10 focus:outline-none focus:border-suncoast-gold text-white font-mono text-[10px] uppercase tracking-widest appearance-none rounded-none"
+              title="Stream: play files from the server each loop. Download: store files on the TV device to save bandwidth."
+            >
+              <option value="stream">Stream from server</option>
+              <option value="download">Download to device</option>
+            </select>
+          </div>
           <TacticalButton variant="secondary" onClick={() => window.open(`/play/${screen.id}`, '_blank')}>
             <ExternalLink size={14} />
             Open Player
@@ -230,18 +264,37 @@ export default function ManageScreen() {
                               </div>
                               
                               <div className="flex items-center gap-3">
-                                <div className="flex items-center gap-2 bg-suncoast-black border border-white/10 px-3 py-1.5 rounded-none">
+                                {item.type === 'media' && (c as MediaContent).type === 'video' && (
+                                  <label
+                                    className={`flex items-center gap-2 px-3 py-1.5 border cursor-pointer transition-colors font-mono text-[10px] uppercase tracking-widest ${
+                                      item.playFull
+                                        ? 'border-suncoast-gold/60 bg-suncoast-gold/10 text-suncoast-gold'
+                                        : 'border-white/10 bg-suncoast-black text-suncoast-warm-gray hover:border-suncoast-gold/30'
+                                    }`}
+                                    title="Play the video to the end instead of cutting it at the set duration"
+                                  >
+                                    <input
+                                      type="checkbox"
+                                      checked={!!item.playFull}
+                                      onChange={(e) => togglePlayFull(index, e.target.checked)}
+                                      className="accent-[#C49A3C]"
+                                    />
+                                    Full video
+                                  </label>
+                                )}
+                                <div className={`flex items-center gap-2 bg-suncoast-black border border-white/10 px-3 py-1.5 rounded-none ${item.playFull ? 'opacity-40' : ''}`}>
                                   <Clock size={12} className="text-suncoast-warm-gray" />
-                                  <input 
-                                    type="number" 
+                                  <input
+                                    type="number"
                                     min={1}
+                                    disabled={!!item.playFull}
                                     value={item.duration}
                                     onChange={(e) => updateDuration(index, parseInt(e.target.value) || 10)}
                                     className="w-12 bg-transparent font-mono text-xs text-white focus:outline-none text-center"
                                   />
                                   <span className="font-mono text-[10px] text-suncoast-warm-gray uppercase tracking-widest">sec</span>
                                 </div>
-                                <button 
+                                <button
                                   onClick={() => removePlaylistItem(index)}
                                   className="p-2 text-suncoast-warm-gray hover:text-red-500 hover:bg-red-500/10 transition-colors border border-transparent hover:border-red-500/20"
                                 >

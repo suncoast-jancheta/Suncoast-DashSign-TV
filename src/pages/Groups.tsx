@@ -3,10 +3,13 @@ import { dataService } from '../services/dataService';
 import { Screen, ScreenGroup } from '../types';
 import { Plus, Search, FolderTree, Trash2, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useAppContext } from '../contexts/AppContext';
 import { TacticalPanel } from '../components/TacticalPanel';
 import { TacticalButton } from '../components/TacticalButton';
 
 export default function Groups() {
+  const { user } = useAppContext();
+  const isAdmin = user?.role === 'Admin';
   const [groups, setGroups] = useState<ScreenGroup[]>([]);
   const [screens, setScreens] = useState<Screen[]>([]);
   const [loading, setLoading] = useState(true);
@@ -49,10 +52,12 @@ export default function Groups() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <h1 className="font-display font-black text-2xl text-white uppercase tracking-wide-ds">Screen Groups</h1>
-        <TacticalButton onClick={() => setIsModalOpen(true)}>
-          <Plus size={16} />
-          CREATE GROUP
-        </TacticalButton>
+        {isAdmin && (
+          <TacticalButton onClick={() => setIsModalOpen(true)}>
+            <Plus size={16} />
+            CREATE GROUP
+          </TacticalButton>
+        )}
       </div>
 
       {isModalOpen && (

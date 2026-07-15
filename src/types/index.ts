@@ -2,7 +2,9 @@ export type MediaType = 'image' | 'video';
 export type DeviceType = 'Android TV' | 'Fire TV' | 'BrightSign' | 'Web Player';
 export type ScreenStatus = 'Online' | 'Offline' | 'Never Connected';
 export type Orientation = 'landscape' | 'portrait';
-export type UserRole = 'Admin' | 'Editor' | 'Viewer';
+export type UserRole = 'Admin' | 'Member';
+export type TransitionStyle = 'none' | 'fade' | 'slide' | 'slide-up' | 'zoom' | 'flip' | 'wipe';
+export type DeliveryMode = 'stream' | 'download';
 
 export interface Workspace {
   id: string;
@@ -11,10 +13,17 @@ export interface Workspace {
 
 export interface User {
   id: string;
+  username: string;
   email: string;
   role: UserRole;
   name: string;
+  /** Screen IDs this user may control; '*' means all screens (Admins). */
+  allowedScreens: string[] | '*';
   avatar?: string;
+}
+
+export interface WorkspaceSettings {
+  transition: TransitionStyle;
 }
 
 export interface Folder {
@@ -56,6 +65,8 @@ export interface PlaylistItem {
   sourceId: string; // ID of MediaContent or Website
   type: 'media' | 'website';
   duration: number; // seconds
+  /** Videos only: play to the end instead of cutting at `duration`. */
+  playFull?: boolean;
   settings?: PlaylistItemSettings;
 }
 
@@ -74,6 +85,9 @@ export interface Screen {
   deviceType: DeviceType;
   lastCheckIn?: string;
   orientation: Orientation;
+  /** 'stream' plays media from the server; 'download' stores files on the
+   *  player device so playback loops don't re-fetch them (less bandwidth). */
+  deliveryMode?: DeliveryMode;
   ipAddress?: string; // local IPv4 address
   operatingHours?: {
     onTime: string; // HH:mm

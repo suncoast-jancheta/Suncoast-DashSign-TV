@@ -1,9 +1,25 @@
-import { PlaylistItem, Screen, ScreenGroup, MediaContent, Website, ReportEntry, Folder, Workspace, User } from '../types';
+import {
+  PlaylistItem,
+  Screen,
+  ScreenGroup,
+  MediaContent,
+  Website,
+  ReportEntry,
+  Folder,
+  Workspace,
+  User,
+  UserRole,
+  WorkspaceSettings,
+  TransitionStyle,
+} from '../types';
+
+const TOKEN_KEY = 'signhub_token';
 
 export interface PlayerData {
   screen: Screen;
   content: MediaContent[];
   websites: Website[];
+  settings?: { transition: TransitionStyle };
 }
 
 class ApiError extends Error {
@@ -24,11 +40,44 @@ interface Me {
 class DataService {
   private meCache: Me | null = null;
 
+  getToken(): string | null {
+    return localStorage.getItem(TOKEN_KEY);
+  }
+
+  isAuthenticated(): boolean {
+    return !!this.getToken();
+  }
+
+  logout(): void {
+    localStorage.removeItem(TOKEN_KEY);
+    this.meCache = null;
+  }
+
+  async login(username: string, password: string): Promise<void> {
+    const res = await fetch('/api/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, password }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new ApiError(data.error || 'Login failed', res.status);
+    localStorage.setItem(TOKEN_KEY, data.token);
+  }
+
   private async request<T>(path: string, options: RequestInit = {}): Promise<T> {
     const headers = new Headers(options.headers);
+    const token = this.getToken();
+    if (token) headers.set('Authorization', `Bearer ${token}`);
     if (options.body && typeof options.body === 'string') headers.set('Content-Type', 'application/json');
 
     const res = await fetch(path, { ...options, headers });
+    if (res.status === 401 && !path.startsWith('/api/player/')) {
+      this.logout();
+      if (!window.location.pathname.startsWith('/login') && !window.location.pathname.startsWith('/play')) {
+        window.location.href = '/login';
+      }
+      throw new ApiError('Unauthorized', 401);
+    }
     const data = await res.json().catch(() => ({}));
     if (!res.ok) throw new ApiError((data as { error?: string }).error || `Request failed (${res.status})`, res.status);
     return data as T;
@@ -67,6 +116,42 @@ class DataService {
 
   async getUser(): Promise<User> {
     return (await this.getMe()).user;
+  }
+
+  /** Change the signed-in user's own password. */
+  async changeMyPassword(currentPassword: string, newPassword: string): Promise<void> {
+    const data = await this.request<{ ok: boolean; token: string }>('/api/me/password', {
+      method: 'POST',
+      body: JSON.stringify({ currentPassword, newPassword }),
+    });
+    // The password change revoked the old token; keep this session alive.
+    if (data.token) localStorage.setItem(TOKEN_KEY, data.token);
+  }
+
+  // Users (admin only)
+  async getUsers(): Promise<User[]> {
+    return this.request<User[]>('/api/users');
+  }
+
+  async createUser(user: { name: string; username: string; password: string; role: UserRole; allowedScreens: string[] }): Promise<User> {
+    return this.request<User>('/api/users', { method: 'POST', body: JSON.stringify(user) });
+  }
+
+  async updateUser(id: string, updates: { name?: string; role?: UserRole; allowedScreens?: string[]; password?: string }): Promise<User> {
+    return this.request<User>(`/api/users/${id}`, { method: 'PUT', body: JSON.stringify(updates) });
+  }
+
+  async deleteUser(id: string): Promise<void> {
+    await this.request(`/api/users/${id}`, { method: 'DELETE' });
+  }
+
+  // Workspace settings
+  async getSettings(): Promise<WorkspaceSettings> {
+    return this.request<WorkspaceSettings>('/api/settings');
+  }
+
+  async updateSettings(settings: WorkspaceSettings): Promise<WorkspaceSettings> {
+    return this.request<WorkspaceSettings>('/api/settings', { method: 'PUT', body: JSON.stringify(settings) });
   }
 
   // Content

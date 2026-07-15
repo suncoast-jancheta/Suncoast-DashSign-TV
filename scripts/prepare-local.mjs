@@ -36,5 +36,6 @@ console.log(`  Admin (this computer):  http://localhost:${PORT}`);
 if (lanIp) {
   console.log(`  TVs / phones on Wi-Fi:  http://${lanIp}:${PORT}/play/<screen-id>`);
 }
+console.log('  Default sign-in:        admin / Suncoast#1234');
 console.log('──────────────────────────────────────────────────────');
 console.log('');

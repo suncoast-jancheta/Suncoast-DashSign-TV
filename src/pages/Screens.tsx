@@ -4,10 +4,13 @@ import { Screen, ScreenGroup } from '../types';
 import { Plus, Search, Monitor, Trash2, X, ExternalLink } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
+import { useAppContext } from '../contexts/AppContext';
 import { TacticalPanel } from '../components/TacticalPanel';
 import { TacticalButton } from '../components/TacticalButton';
 
 export default function Screens() {
+  const { user } = useAppContext();
+  const isAdmin = user?.role === 'Admin';
   const [screens, setScreens] = useState<Screen[]>([]);
   const [groups, setGroups] = useState<ScreenGroup[]>([]);
   const [loading, setLoading] = useState(true);
@@ -62,10 +65,12 @@ export default function Screens() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <h1 className="font-display font-black text-2xl text-white uppercase tracking-wide-ds">Screens</h1>
-        <TacticalButton onClick={() => setIsModalOpen(true)}>
-          <Plus size={16} />
-          ADD SCREEN
-        </TacticalButton>
+        {isAdmin && (
+          <TacticalButton onClick={() => setIsModalOpen(true)}>
+            <Plus size={16} />
+            ADD SCREEN
+          </TacticalButton>
+        )}
       </div>
 
       {isModalOpen && (
