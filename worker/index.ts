@@ -5,9 +5,9 @@
  * - R2 (binding MEDIA): uploaded image/video files, served from /media/*
  * - Static assets (binding ASSETS): the built React admin app + player
  *
- * Auth: single admin password (ADMIN_PASSWORD secret). Login returns an
- * HMAC-signed expiring token. Player endpoints (/api/player/*, /media/*)
- * are public so any TV/browser can display a screen via its link.
+ * No authentication: the admin dashboard and API are open to anyone who can
+ * reach the server. Player endpoints (/api/player/*, /media/*) are likewise
+ * public so any TV/browser can display a screen via its link.
  */
 import { Hono } from 'hono';
 
@@ -15,7 +15,6 @@ export interface Env {
   DB: D1Database;
   MEDIA: R2Bucket;
   ASSETS: Fetcher;
-  ADMIN_PASSWORD?: string;
   WORKSPACE_NAME?: string;
   // Set automatically by scripts/prepare-local.mjs during local dev: the
   // machine's LAN origin (e.g. http://192.168.1.23:8787) so the admin UI can
@@ -24,7 +23,6 @@ export interface Env {
 }
 
 const ONLINE_WINDOW_MS = 90_000; // player checks in every 30s
-const TOKEN_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 
 // ---------------------------------------------------------------------------
 // Schema bootstrap (runs once per isolate)
@@ -66,42 +64,6 @@ function ensureSchema(db: D1Database): Promise<void> {
       });
   }
   return schemaReady;
-}
-
-// ---------------------------------------------------------------------------
-// Auth helpers — HMAC-signed expiring token keyed by the admin password
-// ---------------------------------------------------------------------------
-async function hmacHex(secret: string, message: string): Promise<string> {
-  const key = await crypto.subtle.importKey(
-    'raw',
-    new TextEncoder().encode(secret),
-    { name: 'HMAC', hash: 'SHA-256' },
-    false,
-    ['sign'],
-  );
-  const sig = await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(message));
-  return [...new Uint8Array(sig)].map((b) => b.toString(16).padStart(2, '0')).join('');
-}
-
-async function issueToken(secret: string): Promise<string> {
-  const exp = Date.now() + TOKEN_TTL_MS;
-  return `${exp}.${await hmacHex(secret, `signhub:${exp}`)}`;
-}
-
-async function verifyToken(secret: string, token: string): Promise<boolean> {
-  const [expStr, sig] = token.split('.');
-  if (!expStr || !sig) return false;
-  const exp = Number(expStr);
-  if (!Number.isFinite(exp) || exp < Date.now()) return false;
-  const expected = await hmacHex(secret, `signhub:${expStr}`);
-  return timingSafeEqual(sig, expected);
-}
-
-function timingSafeEqual(a: string, b: string): boolean {
-  if (a.length !== b.length) return false;
-  let diff = 0;
-  for (let i = 0; i < a.length; i++) diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
-  return diff === 0;
 }
 
 // ---------------------------------------------------------------------------
@@ -222,19 +184,6 @@ app.get('/media/*', async (c) => {
   });
 });
 
-// --- Auth -------------------------------------------------------------------
-app.post('/api/auth/login', async (c) => {
-  const secret = c.env.ADMIN_PASSWORD;
-  if (!secret) {
-    return c.json({ error: 'ADMIN_PASSWORD is not configured. Run: npx wrangler secret put ADMIN_PASSWORD' }, 500);
-  }
-  const body = await c.req.json<{ password?: string }>().catch(() => ({ password: undefined }));
-  if (!body.password || !timingSafeEqual(body.password, secret)) {
-    return c.json({ error: 'Incorrect password' }, 401);
-  }
-  return c.json({ token: await issueToken(secret) });
-});
-
 // --- Public player endpoints -------------------------------------------------
 app.get('/api/player/:id', async (c) => {
   const id = c.req.param('id');
@@ -291,19 +240,6 @@ app.post('/api/player/:id/report', async (c) => {
     .bind(generateId(), body.contentName, screen.name, new Date().toISOString(), body.duration ?? 0)
     .run();
   return c.json({ ok: true });
-});
-
-// --- Admin auth middleware ----------------------------------------------------
-app.use('/api/*', async (c, next) => {
-  const path = new URL(c.req.url).pathname;
-  if (path === '/api/auth/login' || path.startsWith('/api/player/')) return next();
-  const secret = c.env.ADMIN_PASSWORD;
-  const auth = c.req.header('Authorization');
-  const token = auth?.startsWith('Bearer ') ? auth.slice(7) : undefined;
-  if (!secret || !token || !(await verifyToken(secret, token))) {
-    return c.json({ error: 'Unauthorized' }, 401);
-  }
-  return next();
 });
 
 // --- Workspace / user ----------------------------------------------------------
