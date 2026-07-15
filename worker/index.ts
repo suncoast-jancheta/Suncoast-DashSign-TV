@@ -348,6 +348,9 @@ app.get('/api/player/:id', async (c) => {
     content: (contentRows.results ?? []).map(rowToContent),
     websites: websiteRows.results ?? [],
     settings: { transition },
+    // Players schedule the playlist against this clock so every device on the
+    // same link shows the same item at the same moment.
+    serverTime: Date.now(),
   });
 });
 

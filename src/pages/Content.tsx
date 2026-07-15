@@ -6,6 +6,26 @@ import { formatBytes } from '../lib/utils';
 import { TacticalPanel } from '../components/TacticalPanel';
 import { TacticalButton } from '../components/TacticalButton';
 
+/** Real length of a video file in seconds, read from its metadata before
+ *  upload — used for playlist timing and synchronized playback. */
+function getVideoDuration(file: File): Promise<number | undefined> {
+  return new Promise((resolve) => {
+    const url = URL.createObjectURL(file);
+    const v = document.createElement('video');
+    v.preload = 'metadata';
+    v.onloadedmetadata = () => {
+      const d = v.duration;
+      URL.revokeObjectURL(url);
+      resolve(Number.isFinite(d) && d > 0 ? Math.round(d) : undefined);
+    };
+    v.onerror = () => {
+      URL.revokeObjectURL(url);
+      resolve(undefined);
+    };
+    v.src = url;
+  });
+}
+
 export default function Content() {
   const [content, setContent] = useState<MediaContent[]>([]);
   const [folders, setFolders] = useState<Folder[]>([]);
@@ -47,12 +67,13 @@ export default function Content() {
     setLoading(true);
     for (const file of mediaFiles) {
       const type = file.type.startsWith('image/') ? 'image' : 'video';
+      const duration = type === 'video' ? ((await getVideoDuration(file)) ?? 10) : undefined;
       await dataService.createContent({
         name: file.name,
         type,
         url: '', // Will be replaced by service
         size: file.size,
-        duration: type === 'video' ? 10 : undefined,
+        duration,
         folderId: currentFolderId,
         orientation: 'landscape'
       }, file);

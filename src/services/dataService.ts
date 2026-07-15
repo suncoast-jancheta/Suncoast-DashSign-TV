@@ -20,6 +20,9 @@ export interface PlayerData {
   content: MediaContent[];
   websites: Website[];
   settings?: { transition: TransitionStyle };
+  /** Server clock (ms epoch) — players schedule the loop against this so all
+   *  devices on the same link stay in sync. */
+  serverTime?: number;
 }
 
 class ApiError extends Error {

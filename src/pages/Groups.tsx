@@ -51,7 +51,12 @@ export default function Groups() {
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <h1 className="font-display font-black text-2xl text-white uppercase tracking-wide-ds">Screen Groups</h1>
+        <div>
+          <h1 className="font-display font-black text-2xl text-white uppercase tracking-wide-ds">Screen Groups</h1>
+          <p className="font-mono text-[10px] text-suncoast-warm-gray uppercase tracking-widest mt-2 max-w-2xl leading-relaxed">
+            Multiple screens showing the same playlist? Manage them in one place: create a group, build its playlist once, then assign screens to the group.
+          </p>
+        </div>
         {isAdmin && (
           <TacticalButton onClick={() => setIsModalOpen(true)}>
             <Plus size={16} />
@@ -116,7 +121,7 @@ export default function Groups() {
               {groups.length === 0 ? (
                 <tr>
                   <td colSpan={4} className="p-8 text-center font-mono text-sm text-suncoast-warm-gray uppercase tracking-widest">
-                    No groups created yet.
+                    No groups yet. Create one, build its playlist, then assign screens in the group's Screens tab.
                   </td>
                 </tr>
               ) : (
