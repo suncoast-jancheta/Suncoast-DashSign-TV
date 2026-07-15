@@ -89,10 +89,12 @@ export interface Screen {
    *  player device so playback loops don't re-fetch them (less bandwidth). */
   deliveryMode?: DeliveryMode;
   ipAddress?: string; // local IPv4 address
+  /** Daily on/off schedule; outside these hours the player blacks out (and a
+   *  CEC agent can power the TV off). null/undefined = always on. */
   operatingHours?: {
     onTime: string; // HH:mm
     offTime: string; // HH:mm
-  };
+  } | null;
   alert?: ScreenAlert;
 }
 

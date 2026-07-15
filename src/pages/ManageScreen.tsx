@@ -121,6 +121,18 @@ export default function ManageScreen() {
     );
   };
 
+  const changeOperatingHours = async (hours: { onTime: string; offTime: string } | null) => {
+    if (!screen) return;
+    const updated = await dataService.updateScreen(screen.id, { operatingHours: hours });
+    setScreen(updated);
+    toast(
+      hours
+        ? `Screen schedule set: on at ${hours.onTime}, off at ${hours.offTime}`
+        : 'Screen schedule removed — always on',
+      'success'
+    );
+  };
+
   const handleSave = async () => {
     if (!screen) return;
     setLoading(true);
@@ -166,6 +178,37 @@ export default function ManageScreen() {
           </div>
         </div>
         <div className="flex items-center gap-4">
+          <div className="hidden lg:flex flex-col gap-1">
+            <span className="font-mono text-[10px] text-suncoast-warm-gray uppercase tracking-widest">Screen Hours (Auto On/Off)</span>
+            <div className="flex items-center gap-2">
+              <label className="flex items-center gap-1.5 cursor-pointer font-mono text-[10px] text-suncoast-warm-gray uppercase tracking-widest" title="Black out the screen outside these hours (a CEC agent can also power the TV off — see README)">
+                <input
+                  type="checkbox"
+                  checked={!!screen.operatingHours}
+                  onChange={(e) => changeOperatingHours(e.target.checked ? { onTime: '08:00', offTime: '22:00' } : null)}
+                  className="accent-[#C49A3C]"
+                />
+                {screen.operatingHours ? '' : 'Always on'}
+              </label>
+              {screen.operatingHours && (
+                <>
+                  <input
+                    type="time"
+                    value={screen.operatingHours.onTime}
+                    onChange={(e) => changeOperatingHours({ onTime: e.target.value, offTime: screen.operatingHours!.offTime })}
+                    className="px-1.5 py-1 bg-suncoast-black border border-white/10 focus:outline-none focus:border-suncoast-gold text-white font-mono text-[10px] rounded-none [color-scheme:dark]"
+                  />
+                  <span className="font-mono text-[10px] text-suncoast-warm-gray">–</span>
+                  <input
+                    type="time"
+                    value={screen.operatingHours.offTime}
+                    onChange={(e) => changeOperatingHours({ onTime: screen.operatingHours!.onTime, offTime: e.target.value })}
+                    className="px-1.5 py-1 bg-suncoast-black border border-white/10 focus:outline-none focus:border-suncoast-gold text-white font-mono text-[10px] rounded-none [color-scheme:dark]"
+                  />
+                </>
+              )}
+            </div>
+          </div>
           <div className="hidden md:flex flex-col gap-1">
             <span className="font-mono text-[10px] text-suncoast-warm-gray uppercase tracking-widest">Playback Source</span>
             <select

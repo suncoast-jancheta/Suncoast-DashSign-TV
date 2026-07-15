@@ -18,6 +18,16 @@ function isItemActiveNow(item: PlaylistItem): boolean {
   return true;
 }
 
+/** Whether the screen should be on right now per its daily schedule (device
+ *  local time). No schedule = always on; overnight ranges supported. */
+function isScreenOnNow(oh?: { onTime: string; offTime: string } | null): boolean {
+  if (!oh?.onTime || !oh?.offTime) return true;
+  const now = new Date();
+  const hhmm = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+  if (oh.onTime <= oh.offTime) return hhmm >= oh.onTime && hhmm < oh.offTime;
+  return hhmm >= oh.onTime || hhmm < oh.offTime;
+}
+
 /** Seconds each playlist item occupies in the loop. "Full video" items use
  *  the video's real length when it's known. */
 function itemDuration(item: PlaylistItem, content: MediaContent[]): number {
@@ -188,6 +198,11 @@ export default function Player() {
   if (loading) return message('Loading...');
   if (notFound) return message('Screen not found');
   if (!data) return message('Cannot reach server — retrying...');
+  // Outside operating hours: black screen. Polling continues (the clock tick
+  // re-evaluates every 500ms), so it wakes up on schedule by itself.
+  if (!isScreenOnNow(data.screen.operatingHours)) {
+    return <div className="fixed inset-0 bg-black cursor-none z-50" />;
+  }
   if (playlist.length === 0)
     return (
       <div className="fixed inset-0 flex items-center justify-center bg-black text-white font-display font-bold text-lg uppercase tracking-wide-ds cursor-none z-50">

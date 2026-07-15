@@ -28,6 +28,29 @@ Runs entirely on Cloudflare:
 Works on anything with a browser: smart TVs, Fire TV/Android TV browsers,
 a Raspberry Pi in kiosk mode, or a PC plugged into a TV.
 
+## Screen on/off schedule + turning the TV off (HDMI-CEC)
+
+Each screen can have daily operating hours ("Screen Hours" on the screen's
+page in the admin). Outside those hours the player blacks out and comes back
+on by itself — no reloading needed. Overnight ranges (on 18:00 / off 02:00)
+work too.
+
+To physically power the TV on/off as well, run the included CEC agent on a
+device connected to the TV over HDMI (a Raspberry Pi is ideal — its HDMI
+port supports CEC out of the box):
+
+```bash
+# On the Raspberry Pi that drives the TV:
+sudo apt install cec-utils
+chmod +x scripts/pi-cec-agent.sh
+./scripts/pi-cec-agent.sh http://<server>:8787 <screen-id> &
+```
+
+The agent asks the server `GET /api/player/<screen-id>/power?time=HH:MM`
+every minute (answer: `on` or `off`, using the schedule you set in the
+admin) and sends the matching HDMI-CEC command to the TV. Add it to
+`/etc/rc.local` or a systemd unit to start on boot.
+
 ## Deploy to Cloudflare (one-time setup)
 
 Prerequisites: a free Cloudflare account and Node.js.

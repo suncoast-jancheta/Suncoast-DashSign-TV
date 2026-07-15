@@ -201,6 +201,14 @@ function screenStatus(lastCheckIn: string | null): 'Online' | 'Offline' | 'Never
   return Date.now() - Date.parse(lastCheckIn) < ONLINE_WINDOW_MS ? 'Online' : 'Offline';
 }
 
+/** Whether a screen should be on at the given HH:MM local time. No schedule
+ *  means always on. Overnight ranges (e.g. on 18:00, off 02:00) supported. */
+function isOnNow(oh: { onTime?: string; offTime?: string } | null | undefined, hhmm: string): boolean {
+  if (!oh?.onTime || !oh?.offTime) return true;
+  if (oh.onTime <= oh.offTime) return hhmm >= oh.onTime && hhmm < oh.offTime;
+  return hhmm >= oh.onTime || hhmm < oh.offTime;
+}
+
 function rowToScreen(row: Record<string, unknown>) {
   return {
     id: row.id,
@@ -352,6 +360,20 @@ app.get('/api/player/:id', async (c) => {
     // same link shows the same item at the same moment.
     serverTime: Date.now(),
   });
+});
+
+// Plain-text power state for CEC agents (e.g. a Raspberry Pi that turns the
+// TV on/off over HDMI). The agent passes its own local time so schedules work
+// in the screen's timezone: GET /api/player/<id>/power?time=HH:MM -> on|off
+app.get('/api/player/:id/power', async (c) => {
+  const row = await c.env.DB.prepare('SELECT operating_hours FROM screens WHERE id = ?')
+    .bind(c.req.param('id'))
+    .first<{ operating_hours: string | null }>();
+  if (!row) return c.text('unknown', 404);
+  const oh = parseJSON<{ onTime?: string; offTime?: string } | null>(row.operating_hours, null);
+  const timeParam = c.req.query('time');
+  const hhmm = timeParam && /^\d{2}:\d{2}$/.test(timeParam) ? timeParam : new Date().toISOString().slice(11, 16);
+  return c.text(isOnNow(oh, hhmm) ? 'on' : 'off');
 });
 
 app.post('/api/player/:id/checkin', async (c) => {
