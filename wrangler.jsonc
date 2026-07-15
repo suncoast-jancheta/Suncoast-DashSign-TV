@@ -3,8 +3,10 @@
   // Before deploying:
   //   1. npx wrangler d1 create suncoast-dashsign      -> paste database_id below
   //   2. npx wrangler r2 bucket create suncoast-dashsign-media
-  //   3. npx wrangler secret put ADMIN_PASSWORD        -> choose your admin login password
-  //   4. npm run deploy
+  //   3. npm run deploy
+  // Default admin login is admin / Suncoast#1234 (change it in Settings ->
+  // My Account after first sign-in). Keep the binding names DB and MEDIA
+  // exactly as-is; the worker reads env.DB and env.MEDIA.
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "suncoast-dashsign",
   "main": "worker/index.ts",
