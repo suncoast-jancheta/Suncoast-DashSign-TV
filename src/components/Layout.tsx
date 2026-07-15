@@ -1,12 +1,19 @@
 import React from 'react';
-import { Outlet, NavLink } from 'react-router-dom';
+import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 import { useAppContext } from '../contexts/AppContext';
-import { LayoutDashboard, MonitorPlay, FolderTree, Image as ImageIcon, Globe, BarChart3, Settings, Bell, Sun } from 'lucide-react';
+import { dataService } from '../services/dataService';
+import { LayoutDashboard, MonitorPlay, FolderTree, Image as ImageIcon, Globe, BarChart3, Settings, Bell, Sun, LogOut } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { TacticalPanel } from './TacticalPanel';
 
 export default function Layout() {
   const { workspace, user, loading } = useAppContext();
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    dataService.logout();
+    navigate('/login');
+  };
 
   if (loading) return <div className="min-h-screen flex items-center justify-center bg-suncoast-black text-suncoast-warm-gray font-mono uppercase tracking-widest text-sm">Loading Suncoast...</div>;
 
@@ -25,11 +32,11 @@ export default function Layout() {
       {/* Sidebar */}
       <aside className="w-full md:w-64 bg-suncoast-charcoal border-r border-suncoast-gold/20 flex flex-col shrink-0 z-20 relative">
         <div className="h-16 flex items-center px-6 border-b border-suncoast-gold/20">
-          <div className="flex items-center gap-3 font-display font-bold text-xl tracking-wide-ds text-white uppercase">
+          <div className="flex items-center gap-3 font-display font-bold text-base tracking-wide-ds text-white uppercase">
             <div className="text-suncoast-gold">
               <Sun size={22} strokeWidth={2.5} />
             </div>
-            Suncoast
+            Suncoast Signages
           </div>
         </div>
         
@@ -79,6 +86,13 @@ export default function Layout() {
             <button className="p-2 text-suncoast-warm-gray hover:text-suncoast-gold transition-colors relative hover:bg-suncoast-elevated border border-transparent hover:border-suncoast-gold/20 rounded-none">
               <Bell size={18} />
               <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-none"></span>
+            </button>
+            <button
+              onClick={handleLogout}
+              title="Sign out"
+              className="p-2 text-suncoast-warm-gray hover:text-suncoast-gold transition-colors hover:bg-suncoast-elevated border border-transparent hover:border-suncoast-gold/20 rounded-none"
+            >
+              <LogOut size={18} />
             </button>
           </div>
         </header>

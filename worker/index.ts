@@ -293,18 +293,23 @@ app.post('/api/player/:id/report', async (c) => {
   return c.json({ ok: true });
 });
 
-// --- Middleware: Public player endpoints, all other endpoints open -----------
+// --- Admin auth middleware ----------------------------------------------------
 app.use('/api/*', async (c, next) => {
   const path = new URL(c.req.url).pathname;
-  if (path.startsWith('/api/player/')) return next();
-  // All admin endpoints (/api/*) are now open without authentication
+  if (path === '/api/auth/login' || path.startsWith('/api/player/')) return next();
+  const secret = c.env.ADMIN_PASSWORD;
+  const auth = c.req.header('Authorization');
+  const token = auth?.startsWith('Bearer ') ? auth.slice(7) : undefined;
+  if (!secret || !token || !(await verifyToken(secret, token))) {
+    return c.json({ error: 'Unauthorized' }, 401);
+  }
   return next();
 });
 
 // --- Workspace / user ----------------------------------------------------------
 app.get('/api/me', (c) =>
   c.json({
-    workspace: { id: 'ws-1', name: c.env.WORKSPACE_NAME || 'Suncoast Signage' },
+    workspace: { id: 'ws-1', name: c.env.WORKSPACE_NAME || 'Suncoast Signages' },
     user: { id: 'u-1', email: 'admin', role: 'Admin', name: 'Admin' },
     playerOrigin: c.env.LAN_ORIGIN || null,
   }),

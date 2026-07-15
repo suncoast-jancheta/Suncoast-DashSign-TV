@@ -70,7 +70,7 @@ export interface Screen {
   name: string;
   status: ScreenStatus;
   playlist: PlaylistItem[];
-  groupId?: string; // if part of a group
+  groupId?: string | null; // if part of a group
   deviceType: DeviceType;
   lastCheckIn?: string;
   orientation: Orientation;

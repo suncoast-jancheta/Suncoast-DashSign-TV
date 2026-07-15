@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { dataService } from '../services/dataService';
 import { Screen, ScreenGroup } from '../types';
-import { Plus, Search, FolderTree, MoreVertical, X } from 'lucide-react';
+import { Plus, Search, FolderTree, Trash2, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { TacticalPanel } from '../components/TacticalPanel';
 import { TacticalButton } from '../components/TacticalButton';
@@ -24,6 +24,13 @@ export default function Groups() {
     setScreens(s);
     setLoading(false);
   }
+
+  const handleDeleteGroup = async (group: ScreenGroup) => {
+    if (!window.confirm(`Delete group "${group.name}"? Its screens will become individual screens.`)) return;
+    setLoading(true);
+    await dataService.deleteGroup(group.id);
+    await load();
+  };
 
   const handleAddGroup = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -134,8 +141,15 @@ export default function Groups() {
                         {group.playlist.length} items
                       </td>
                       <td className="p-4">
-                        <button className="text-suncoast-warm-gray hover:text-white p-1.5 hover:bg-white/5 transition-colors border border-transparent hover:border-white/10" onClick={(e) => e.stopPropagation()}>
-                          <MoreVertical size={16} />
+                        <button
+                          className="text-suncoast-warm-gray hover:text-red-500 p-1.5 hover:bg-red-500/10 transition-colors border border-transparent hover:border-red-500/20"
+                          title="Delete Group"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteGroup(group);
+                          }}
+                        >
+                          <Trash2 size={16} />
                         </button>
                       </td>
                     </tr>

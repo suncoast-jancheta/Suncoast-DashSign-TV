@@ -1,4 +1,4 @@
-# Suncoast DashSign TV
+# Suncoast Signages
 
 Cloud-based digital signage (like AbleSign.TV): upload images and videos once,
 then display them on any TV or browser at any location via a simple link.
@@ -66,8 +66,8 @@ npm start
 ```
 
 Then open http://localhost:8787 and sign in — the default local password is
-**suncoast** (created in `.dev.vars` on first start; edit that file to change
-it, then restart). `npm start` builds the app and runs it with local D1/R2
+**Suncoast#1234** (created in `.dev.vars` on first start; edit that file to
+change it, then restart). `npm start` builds the app and runs it with local D1/R2
 emulation; data persists in the `.wrangler` folder between restarts.
 
 The server listens on your network too, so a TV or phone on the same Wi-Fi

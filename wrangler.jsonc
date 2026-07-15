@@ -29,7 +29,7 @@
     }
   ],
   "vars": {
-    "WORKSPACE_NAME": "Suncoast Signage"
+    "WORKSPACE_NAME": "Suncoast Signages"
   },
   "observability": {
     "enabled": true

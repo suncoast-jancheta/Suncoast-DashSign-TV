@@ -29,11 +29,11 @@ export default function Login() {
   return (
     <div className="min-h-screen bg-suncoast-black flex items-center justify-center p-6">
       <div className="w-full max-w-sm">
-        <div className="flex items-center justify-center gap-3 font-display font-bold text-2xl tracking-wide-ds text-white uppercase mb-8">
+        <div className="flex items-center justify-center gap-3 font-display font-bold text-xl tracking-wide-ds text-white uppercase mb-8">
           <div className="text-suncoast-gold">
             <Sun size={28} strokeWidth={2.5} />
           </div>
-          Suncoast
+          Suncoast Signages
         </div>
         <TacticalPanel className="p-6">
           <div className="flex items-center gap-3 mb-6">

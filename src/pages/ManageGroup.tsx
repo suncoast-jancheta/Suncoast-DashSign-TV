@@ -2,8 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { dataService } from '../services/dataService';
 import { useToast } from '../contexts/ToastContext';
-import { ScreenGroup, MediaContent, Website, PlaylistItem } from '../types';
-import { ArrowLeft, Save, Clock, Trash2, GripVertical, PlayCircle, Image as ImageIcon, Video, Globe, Users } from 'lucide-react';
+import { ScreenGroup, MediaContent, Website, PlaylistItem, Screen } from '../types';
+import { ArrowLeft, Save, Clock, Trash2, GripVertical, PlayCircle, Image as ImageIcon, Video, Globe, Users, Monitor, CheckSquare, Square } from 'lucide-react';
 import { generateId, formatBytes } from '../lib/utils';
 import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
 import { TacticalPanel } from '../components/TacticalPanel';
@@ -17,18 +17,20 @@ export default function ManageGroup() {
   const [group, setGroup] = useState<ScreenGroup | null>(null);
   const [content, setContent] = useState<MediaContent[]>([]);
   const [websites, setWebsites] = useState<Website[]>([]);
+  const [screens, setScreens] = useState<Screen[]>([]);
   const [playlist, setPlaylist] = useState<PlaylistItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'content' | 'websites'>('content');
+  const [activeTab, setActiveTab] = useState<'screens' | 'content' | 'websites'>('screens');
   const [hasUnsaved, setHasUnsaved] = useState(false);
 
   useEffect(() => {
     async function load() {
       if (!id) return;
-      const [g, c, w] = await Promise.all([
+      const [g, c, w, s] = await Promise.all([
         dataService.getGroup(id),
         dataService.getContent(),
-        dataService.getWebsites()
+        dataService.getWebsites(),
+        dataService.getScreens()
       ]);
       if (g) {
         setGroup(g);
@@ -36,10 +38,24 @@ export default function ManageGroup() {
       }
       setContent(c);
       setWebsites(w);
+      setScreens(s);
       setLoading(false);
     }
     load();
   }, [id]);
+
+  const toggleScreenMembership = async (screen: Screen) => {
+    if (!group) return;
+    const isMember = screen.groupId === group.id;
+    const updated = await dataService.updateScreen(screen.id, { groupId: isMember ? null : group.id });
+    setScreens(prev => prev.map(s => (s.id === screen.id ? updated : s)));
+    toast(
+      isMember
+        ? `"${screen.name}" removed from ${group.name}`
+        : `"${screen.name}" added to ${group.name} — it now plays this group's playlist`,
+      'success'
+    );
+  };
 
   const handleDragEnd = (result: DropResult) => {
     const { source, destination } = result;
@@ -119,7 +135,7 @@ export default function ManageGroup() {
           <div>
             <h1 className="font-display font-black text-white uppercase tracking-wide-ds text-lg leading-none">{group.name}</h1>
             <p className="font-mono text-[10px] text-suncoast-warm-gray uppercase tracking-widest mt-1 flex items-center gap-2">
-              <Users size={12} /> Screen Group
+              <Users size={12} /> Screen Group — {screens.filter(s => s.groupId === group.id).length} screen{screens.filter(s => s.groupId === group.id).length === 1 ? '' : 's'}
             </p>
           </div>
         </div>
@@ -236,27 +252,73 @@ export default function ManageGroup() {
 
           <div className="w-80 md:w-96 bg-suncoast-charcoal border-l border-suncoast-gold/20 flex flex-col shrink-0">
             <div className="flex items-center border-b border-suncoast-gold/20 bg-suncoast-elevated shrink-0">
-              <button 
+              <button
+                onClick={() => setActiveTab('screens')}
+                className={`flex-1 py-3 font-mono text-xs uppercase tracking-widest border-b-2 transition-colors ${activeTab === 'screens' ? 'border-suncoast-gold text-suncoast-gold bg-suncoast-gold/5' : 'border-transparent text-suncoast-warm-gray hover:text-suncoast-cream hover:bg-white/5'}`}
+              >
+                Screens
+              </button>
+              <button
                 onClick={() => setActiveTab('content')}
                 className={`flex-1 py-3 font-mono text-xs uppercase tracking-widest border-b-2 transition-colors ${activeTab === 'content' ? 'border-suncoast-gold text-suncoast-gold bg-suncoast-gold/5' : 'border-transparent text-suncoast-warm-gray hover:text-suncoast-cream hover:bg-white/5'}`}
               >
-                Media Library
+                Media
               </button>
-              <button 
+              <button
                 onClick={() => setActiveTab('websites')}
                 className={`flex-1 py-3 font-mono text-xs uppercase tracking-widest border-b-2 transition-colors ${activeTab === 'websites' ? 'border-suncoast-gold text-suncoast-gold bg-suncoast-gold/5' : 'border-transparent text-suncoast-warm-gray hover:text-suncoast-cream hover:bg-white/5'}`}
               >
                 Websites
               </button>
             </div>
-            
+
             <Droppable droppableId="library" isDropDisabled={true}>
               {(provided) => (
-                <div 
-                  ref={provided.innerRef} 
+                <div
+                  ref={provided.innerRef}
                   {...provided.droppableProps}
                   className="flex-1 overflow-y-auto p-4 flex flex-col gap-3"
                 >
+                  {activeTab === 'screens' && (
+                    <>
+                      <p className="font-mono text-[10px] text-suncoast-warm-gray uppercase tracking-widest leading-relaxed">
+                        Check a screen to add it to this group. Member screens play this group's playlist.
+                      </p>
+                      {screens.length === 0 && (
+                        <p className="font-mono text-[10px] text-suncoast-warm-gray uppercase tracking-widest">
+                          No screens yet — add screens on the Screens page first.
+                        </p>
+                      )}
+                      {screens.map((screen) => {
+                        const isMember = screen.groupId === group.id;
+                        const inOtherGroup = !!screen.groupId && !isMember;
+                        return (
+                          <button
+                            key={screen.id}
+                            onClick={() => toggleScreenMembership(screen)}
+                            className={`bg-suncoast-elevated rounded-none border p-3 flex items-center gap-3 text-left transition-colors ${
+                              isMember ? 'border-suncoast-gold/60 bg-suncoast-gold/5' : 'border-white/5 hover:border-suncoast-gold/30'
+                            }`}
+                          >
+                            {isMember ? (
+                              <CheckSquare size={18} className="text-suncoast-gold shrink-0" />
+                            ) : (
+                              <Square size={18} className="text-suncoast-warm-gray shrink-0" />
+                            )}
+                            <div className="w-9 h-9 border border-suncoast-gold/20 bg-suncoast-gold/5 flex items-center justify-center text-suncoast-gold shrink-0">
+                              <Monitor size={16} />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <h4 className="font-sans text-sm font-medium text-white truncate">{screen.name}</h4>
+                              <p className="font-mono text-[10px] text-suncoast-warm-gray mt-1 uppercase tracking-widest">
+                                {screen.status}{inOtherGroup ? ' • in another group' : ''}
+                              </p>
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </>
+                  )}
                   {activeTab === 'content' && content.map((item, index) => (
                     // @ts-ignore
                     <Draggable key={`media::${item.id}`} draggableId={`media::${item.id}`} index={index}>

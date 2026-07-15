@@ -140,7 +140,7 @@ export default function Dashboard() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <TacticalPanel className="p-6 col-span-2">
-          <h2 className="font-display font-black text-sm text-suncoast-cream uppercase tracking-wide-ds mb-6">Proof of Play (7 Days)</h2>
+          <h2 className="font-display font-black text-sm text-suncoast-cream uppercase tracking-wide-ds mb-6">Plays This Week</h2>
           <div className="h-64">
             {reports.length === 0 ? (
               <div className="h-full flex items-center justify-center font-mono text-xs text-suncoast-warm-gray uppercase tracking-widest text-center px-6">

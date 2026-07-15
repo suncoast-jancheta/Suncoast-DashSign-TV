@@ -14,6 +14,9 @@ if (!fs.existsSync('.dev.vars')) {
 
 let vars = fs.readFileSync('.dev.vars', 'utf8');
 
+// Migrate the old default password to the current one (only if unchanged).
+vars = vars.replace(/^ADMIN_PASSWORD="?suncoast"?$/m, 'ADMIN_PASSWORD="Suncoast#1234"');
+
 const lanIp = Object.values(os.networkInterfaces())
   .flat()
   .find((i) => i && i.family === 'IPv4' && !i.internal)?.address;
@@ -25,14 +28,14 @@ if (lanIp) {
   } else {
     vars = vars.trimEnd() + `\nLAN_ORIGIN="${lanOrigin}"\n`;
   }
-  fs.writeFileSync('.dev.vars', vars);
 }
+fs.writeFileSync('.dev.vars', vars);
 
 const password = vars.match(/^ADMIN_PASSWORD="?([^"\n]*)"?$/m)?.[1];
 
 console.log('');
 console.log('──────────────────────────────────────────────────────');
-console.log('  Suncoast DashSign TV — local server');
+console.log('  Suncoast Signages — local server');
 console.log('');
 console.log(`  Admin (this computer):  http://localhost:${PORT}`);
 if (lanIp) {

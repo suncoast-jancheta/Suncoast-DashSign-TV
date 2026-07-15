@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { dataService } from '../services/dataService';
 import { Website } from '../types';
-import { Plus, Globe, ExternalLink, MoreVertical, X } from 'lucide-react';
+import { Plus, Globe, ExternalLink, Trash2, X } from 'lucide-react';
 import { TacticalPanel } from '../components/TacticalPanel';
 import { TacticalButton } from '../components/TacticalButton';
 
@@ -21,6 +21,13 @@ export default function Websites() {
     setWebsites(w);
     setLoading(false);
   }
+
+  const handleDeleteWebsite = async (website: Website) => {
+    if (!window.confirm(`Delete website "${website.name}"?`)) return;
+    setLoading(true);
+    await dataService.deleteWebsite(website.id);
+    await load();
+  };
 
   const handleAddWebsite = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -100,7 +107,11 @@ export default function Websites() {
                 </div>
               )}
               <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                <button className="w-12 h-12 bg-suncoast-black border border-suncoast-gold flex items-center justify-center text-suncoast-gold hover:bg-suncoast-gold/20 transition-colors rounded-none" title="Preview">
+                <button
+                  className="w-12 h-12 bg-suncoast-black border border-suncoast-gold flex items-center justify-center text-suncoast-gold hover:bg-suncoast-gold/20 transition-colors rounded-none"
+                  title="Preview"
+                  onClick={() => window.open(website.url, '_blank')}
+                >
                   <ExternalLink size={20} />
                 </button>
               </div>
@@ -110,8 +121,12 @@ export default function Websites() {
                 <h3 className="font-display font-bold text-white truncate text-sm uppercase tracking-wide">{website.name}</h3>
                 <p className="font-mono text-[10px] text-suncoast-warm-gray truncate mt-1 tracking-widest">{website.url}</p>
               </div>
-              <button className="text-suncoast-warm-gray hover:text-white p-1 -mt-1 -mr-1 hover:bg-white/5 transition-colors border border-transparent hover:border-white/10 rounded-none shrink-0 ml-2">
-                <MoreVertical size={16} />
+              <button
+                className="text-suncoast-warm-gray hover:text-red-500 p-1 -mt-1 -mr-1 hover:bg-red-500/10 transition-colors border border-transparent hover:border-red-500/20 rounded-none shrink-0 ml-2"
+                title="Delete Website"
+                onClick={() => handleDeleteWebsite(website)}
+              >
+                <Trash2 size={16} />
               </button>
             </div>
           </TacticalPanel>

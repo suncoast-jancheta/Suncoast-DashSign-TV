@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { dataService } from '../services/dataService';
 import { Screen, ScreenGroup } from '../types';
-import { Plus, Search, Monitor, MoreVertical, X, ExternalLink } from 'lucide-react';
+import { Plus, Search, Monitor, Trash2, X, ExternalLink } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
 import { TacticalPanel } from '../components/TacticalPanel';
@@ -26,6 +26,13 @@ export default function Screens() {
     setGroups(g);
     setLoading(false);
   }
+
+  const handleDeleteScreen = async (screen: Screen) => {
+    if (!window.confirm(`Delete screen "${screen.name}"? Its player link will stop working.`)) return;
+    setLoading(true);
+    await dataService.deleteScreen(screen.id);
+    await load();
+  };
 
   const handleAddScreen = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -188,8 +195,15 @@ export default function Screens() {
                         >
                           <ExternalLink size={16} />
                         </button>
-                        <button className="text-suncoast-warm-gray hover:text-white p-1.5 hover:bg-white/5 transition-colors border border-transparent hover:border-white/10" onClick={(e) => e.stopPropagation()}>
-                          <MoreVertical size={16} />
+                        <button
+                          className="text-suncoast-warm-gray hover:text-red-500 p-1.5 hover:bg-red-500/10 transition-colors border border-transparent hover:border-red-500/20"
+                          title="Delete Screen"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteScreen(screen);
+                          }}
+                        >
+                          <Trash2 size={16} />
                         </button>
                       </td>
                     </tr>
