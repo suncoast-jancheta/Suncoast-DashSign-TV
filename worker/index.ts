@@ -293,16 +293,11 @@ app.post('/api/player/:id/report', async (c) => {
   return c.json({ ok: true });
 });
 
-// --- Admin auth middleware ----------------------------------------------------
+// --- Middleware: Public player endpoints, all other endpoints open -----------
 app.use('/api/*', async (c, next) => {
   const path = new URL(c.req.url).pathname;
-  if (path === '/api/auth/login' || path.startsWith('/api/player/')) return next();
-  const secret = c.env.ADMIN_PASSWORD;
-  const auth = c.req.header('Authorization');
-  const token = auth?.startsWith('Bearer ') ? auth.slice(7) : undefined;
-  if (!secret || !token || !(await verifyToken(secret, token))) {
-    return c.json({ error: 'Unauthorized' }, 401);
-  }
+  if (path.startsWith('/api/player/')) return next();
+  // All admin endpoints (/api/*) are now open without authentication
   return next();
 });
 

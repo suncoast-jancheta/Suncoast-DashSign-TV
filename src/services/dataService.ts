@@ -1,7 +1,5 @@
 import { PlaylistItem, Screen, ScreenGroup, MediaContent, Website, ReportEntry, Folder, Workspace, User } from '../types';
 
-const TOKEN_KEY = 'signhub_token';
-
 export interface PlayerData {
   screen: Screen;
   content: MediaContent[];
@@ -26,44 +24,11 @@ interface Me {
 class DataService {
   private meCache: Me | null = null;
 
-  getToken(): string | null {
-    return localStorage.getItem(TOKEN_KEY);
-  }
-
-  isAuthenticated(): boolean {
-    return !!this.getToken();
-  }
-
-  logout(): void {
-    localStorage.removeItem(TOKEN_KEY);
-    this.meCache = null;
-  }
-
-  async login(password: string): Promise<void> {
-    const res = await fetch('/api/auth/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ password }),
-    });
-    const data = await res.json().catch(() => ({}));
-    if (!res.ok) throw new ApiError(data.error || 'Login failed', res.status);
-    localStorage.setItem(TOKEN_KEY, data.token);
-  }
-
   private async request<T>(path: string, options: RequestInit = {}): Promise<T> {
     const headers = new Headers(options.headers);
-    const token = this.getToken();
-    if (token) headers.set('Authorization', `Bearer ${token}`);
     if (options.body && typeof options.body === 'string') headers.set('Content-Type', 'application/json');
 
     const res = await fetch(path, { ...options, headers });
-    if (res.status === 401 && !path.startsWith('/api/player/')) {
-      this.logout();
-      if (!window.location.pathname.startsWith('/login') && !window.location.pathname.startsWith('/play')) {
-        window.location.href = '/login';
-      }
-      throw new ApiError('Unauthorized', 401);
-    }
     const data = await res.json().catch(() => ({}));
     if (!res.ok) throw new ApiError((data as { error?: string }).error || `Request failed (${res.status})`, res.status);
     return data as T;
