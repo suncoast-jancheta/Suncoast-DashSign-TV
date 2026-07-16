@@ -172,7 +172,9 @@ export default function Player() {
         }
       }
       if (!cancelled) {
-        downloadedAtRef.current = Date.now();
+        // Only announce "ready" when every file really made it; failures
+        // retry on the next 30s poll.
+        if (done === wanted.length) downloadedAtRef.current = Date.now();
         setDownloadProgress(null);
       }
     })();

@@ -37,8 +37,12 @@ export function ToastProvider({ children }: { children: ReactNode }) {
               initial={{ opacity: 0, y: 20, scale: 0.9 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, scale: 0.9, transition: { duration: 0.2 } }}
-              className={`min-w-[300px] flex items-center justify-between p-4 rounded-lg shadow-lg text-white ${
-                t.type === 'success' ? 'bg-green-600' : t.type === 'error' ? 'bg-red-600' : 'bg-blue-600'
+              className={`min-w-[300px] max-w-[420px] flex items-center justify-between gap-3 p-4 rounded-none shadow-lg border font-mono text-xs tracking-wide bg-suncoast-charcoal ${
+                t.type === 'success'
+                  ? 'border-emerald-500/60 text-emerald-300'
+                  : t.type === 'error'
+                    ? 'border-red-500/60 text-red-300'
+                    : 'border-suncoast-gold/60 text-suncoast-cream'
               }`}
             >
               <span>{t.message}</span>

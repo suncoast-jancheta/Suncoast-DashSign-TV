@@ -95,6 +95,16 @@ export default function Websites() {
         </div>
       )}
 
+      {websites.length === 0 && (
+        <TacticalPanel className="p-12 flex flex-col items-center justify-center text-suncoast-warm-gray">
+          <Globe size={48} className="mb-4 text-suncoast-gold/50" />
+          <p className="font-display font-bold text-white uppercase tracking-wide-ds text-sm mb-2">No websites yet</p>
+          <p className="font-mono text-[10px] uppercase tracking-widest text-center leading-relaxed">
+            Add a live web page (dashboard, menu, weather...) and drop it into any screen's playlist
+          </p>
+        </TacticalPanel>
+      )}
+
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
         {websites.map((website) => (
           <TacticalPanel key={website.id} className="group overflow-hidden">

@@ -139,7 +139,12 @@ export default function ManageScreen() {
     await dataService.updateScreen(screen.id, { playlist });
     setHasUnsaved(false);
     setLoading(false);
-    toast('Playlist published — screen is downloading content', 'success');
+    toast('Playlist published — the screen picks it up within 30 seconds', 'success');
+  };
+
+  const goBack = () => {
+    if (hasUnsaved && !window.confirm('You have unpublished playlist changes. Leave without publishing?')) return;
+    navigate('/screens');
   };
 
   if (loading && !screen) return <div className="font-mono text-suncoast-warm-gray uppercase tracking-widest text-sm">Loading...</div>;
@@ -158,9 +163,9 @@ export default function ManageScreen() {
 
   return (
     <div className="flex flex-col h-[calc(100vh-64px)] -m-6">
-      <div className="min-h-[4rem] py-3 bg-suncoast-charcoal border-b border-suncoast-gold/20 px-6 flex items-center justify-between shrink-0 z-10">
+      <div className="min-h-[4rem] py-3 bg-suncoast-charcoal border-b border-suncoast-gold/20 px-6 flex items-center justify-between gap-4 flex-wrap shrink-0 z-10">
         <div className="flex items-center gap-4">
-          <button onClick={() => navigate('/screens')} className="text-suncoast-warm-gray hover:text-suncoast-gold transition-colors">
+          <button onClick={goBack} className="text-suncoast-warm-gray hover:text-suncoast-gold transition-colors">
             <ArrowLeft size={20} />
           </button>
           <div className="flex gap-4">
@@ -245,8 +250,8 @@ export default function ManageScreen() {
       </div>
 
       <DragDropContext onDragEnd={handleDragEnd}>
-        <div className="flex-1 flex overflow-hidden">
-          <div className="flex-1 bg-suncoast-black flex flex-col min-w-0">
+        <div className="flex-1 flex flex-col lg:flex-row overflow-hidden">
+          <div className="flex-1 bg-suncoast-black flex flex-col min-w-0 min-h-0">
             <div className="p-4 border-b border-white/5 flex items-center justify-between bg-suncoast-elevated shrink-0">
               <div>
                 <h2 className="font-display font-bold text-white uppercase tracking-wide-ds text-sm">Active Playlist</h2>
@@ -287,7 +292,7 @@ export default function ManageScreen() {
                             <div
                               ref={provided.innerRef}
                               {...provided.draggableProps}
-                              className={`bg-suncoast-elevated border rounded-none p-3 flex items-center gap-4 transition-all ${
+                              className={`bg-suncoast-elevated border rounded-none p-3 flex items-center gap-4 flex-wrap transition-all ${
                                 snapshot.isDragging ? 'border-suncoast-gold shadow-[0_0_15px_rgba(196,154,60,0.15)] z-50' : 'border-white/10 hover:border-suncoast-gold/30'
                               }`}
                             >
@@ -367,7 +372,7 @@ export default function ManageScreen() {
             </Droppable>
           </div>
 
-          <div className="w-80 md:w-96 bg-suncoast-charcoal border-l border-suncoast-gold/20 flex flex-col shrink-0">
+          <div className="w-full lg:w-96 h-72 lg:h-auto bg-suncoast-charcoal border-t lg:border-t-0 lg:border-l border-suncoast-gold/20 flex flex-col shrink-0">
             <div className="flex items-center border-b border-suncoast-gold/20 bg-suncoast-elevated shrink-0">
               <button 
                 onClick={() => setActiveTab('content')}

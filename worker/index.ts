@@ -680,7 +680,8 @@ app.post('/api/content', async (c) => {
       httpMetadata: { contentType: file.type || 'application/octet-stream' },
     });
     const durationRaw = form.get('duration');
-    const duration = durationRaw ? Number(durationRaw) : null;
+    const parsedDuration = durationRaw ? Number(durationRaw) : NaN;
+    const duration = Number.isFinite(parsedDuration) && parsedDuration > 0 ? parsedDuration : null;
     const folderId = form.get('folderId') ? String(form.get('folderId')) : null;
     const orientation = String(form.get('orientation') || 'landscape');
     await c.env.DB.prepare(

@@ -47,6 +47,7 @@ export default function Login() {
           <form onSubmit={handleSubmit} className="space-y-4">
             <input
               type="text"
+              required
               autoFocus
               autoCapitalize="none"
               autoComplete="username"
@@ -57,6 +58,7 @@ export default function Login() {
             />
             <input
               type="password"
+              required
               autoComplete="current-password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}

@@ -127,10 +127,8 @@ export default function Dashboard() {
             <HardDrive size={24} />
           </div>
           <div className="w-full">
-            <div className="flex justify-between items-end mb-2">
-              <div className="font-mono text-[10px] text-suncoast-warm-gray uppercase tracking-widest">Storage Used</div>
-              <div className="font-mono text-xs text-white uppercase tracking-widest">{formatBytes(usedStorage)}</div>
-            </div>
+            <div className="font-mono text-[10px] text-suncoast-warm-gray uppercase tracking-widest mb-1">Storage Used</div>
+            <div className="font-mono font-extrabold text-2xl text-white leading-none mb-1">{formatBytes(usedStorage)}</div>
             <div className="font-mono text-[10px] text-suncoast-warm-gray uppercase tracking-widest">
               {content.length} file{content.length === 1 ? '' : 's'} in library
             </div>

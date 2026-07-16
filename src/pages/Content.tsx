@@ -241,7 +241,10 @@ export default function Content() {
               {currentSubfolders.map(folder => (
                 <div
                   key={folder.id}
-                  onClick={() => setCurrentFolderId(folder.id)}
+                  onClick={() => {
+                    setQuery(''); // leave search mode when opening a folder
+                    setCurrentFolderId(folder.id);
+                  }}
                   className="group relative aspect-square bg-suncoast-black border border-white/5 hover:border-suncoast-gold/50 cursor-pointer transition-all flex flex-col items-center justify-center gap-3 p-4 rounded-none"
                 >
                   <FolderIcon size={48} className="text-suncoast-warm-gray group-hover:text-suncoast-gold transition-colors" />
