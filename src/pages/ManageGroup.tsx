@@ -133,7 +133,16 @@ export default function ManageGroup() {
   if (loading && !group) return <div className="font-mono text-suncoast-warm-gray uppercase tracking-widest text-sm">Loading...</div>;
   if (!group) return <div className="font-mono text-suncoast-warm-gray uppercase tracking-widest text-sm">Group not found</div>;
 
-  const totalDuration = playlist.reduce((acc, curr) => acc + curr.duration, 0);
+  // "Full video" items occupy the video's real length in the loop.
+  const totalDuration = Math.round(
+    playlist.reduce((acc, item) => {
+      if (item.playFull && item.type === 'media') {
+        const c = content.find((x) => x.id === item.sourceId);
+        if (c?.duration && c.duration > 0) return acc + c.duration;
+      }
+      return acc + item.duration;
+    }, 0),
+  );
 
   return (
     <div className="flex flex-col h-[calc(100vh-64px)] -m-6">

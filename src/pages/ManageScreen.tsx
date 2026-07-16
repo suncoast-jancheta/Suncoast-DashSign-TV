@@ -145,7 +145,16 @@ export default function ManageScreen() {
   if (loading && !screen) return <div className="font-mono text-suncoast-warm-gray uppercase tracking-widest text-sm">Loading...</div>;
   if (!screen) return <div className="font-mono text-suncoast-warm-gray uppercase tracking-widest text-sm">Screen not found</div>;
 
-  const totalDuration = playlist.reduce((acc, curr) => acc + curr.duration, 0);
+  // "Full video" items occupy the video's real length in the loop.
+  const totalDuration = Math.round(
+    playlist.reduce((acc, item) => {
+      if (item.playFull && item.type === 'media') {
+        const c = content.find((x) => x.id === item.sourceId);
+        if (c?.duration && c.duration > 0) return acc + c.duration;
+      }
+      return acc + item.duration;
+    }, 0),
+  );
 
   return (
     <div className="flex flex-col h-[calc(100vh-64px)] -m-6">
@@ -162,10 +171,12 @@ export default function ManageScreen() {
                 {screen.status} • {screen.deviceType} • {screen.orientation}
               </p>
               <div className="mt-2 flex flex-col gap-1">
-                <div className="flex items-center gap-2 bg-suncoast-black border border-white/10 px-2 py-1 w-fit">
-                  <span className="font-mono text-[10px] text-suncoast-warm-gray uppercase tracking-widest select-none">LOCAL IP (BSN):</span>
-                  <code className="font-mono text-[10px] text-suncoast-gold select-all">{screen.ipAddress || '192.168.1.100'}</code>
-                </div>
+                {screen.ipAddress && (
+                  <div className="flex items-center gap-2 bg-suncoast-black border border-white/10 px-2 py-1 w-fit">
+                    <span className="font-mono text-[10px] text-suncoast-warm-gray uppercase tracking-widest select-none">DEVICE IP:</span>
+                    <code className="font-mono text-[10px] text-suncoast-gold select-all">{screen.ipAddress}</code>
+                  </div>
+                )}
                 <div className="flex items-center gap-2 bg-suncoast-black border border-white/10 px-2 py-1 w-fit">
                   <span className="font-mono text-[10px] text-suncoast-warm-gray uppercase tracking-widest select-none">PLAYER LINK (TV / PHONE):</span>
                   <code className="font-mono text-[10px] text-suncoast-gold select-all">{playerOrigin}/play/{screen.id}</code>
@@ -177,8 +188,8 @@ export default function ManageScreen() {
             </div>
           </div>
         </div>
-        <div className="flex items-center gap-4">
-          <div className="hidden lg:flex flex-col gap-1">
+        <div className="flex items-center gap-4 flex-wrap justify-end">
+          <div className="flex flex-col gap-1">
             <span className="font-mono text-[10px] text-suncoast-warm-gray uppercase tracking-widest">Screen Hours (Auto On/Off)</span>
             <div className="flex items-center gap-2">
               <label className="flex items-center gap-1.5 cursor-pointer font-mono text-[10px] text-suncoast-warm-gray uppercase tracking-widest" title="Black out the screen outside these hours (a CEC agent can also power the TV off — see README)">
@@ -209,7 +220,7 @@ export default function ManageScreen() {
               )}
             </div>
           </div>
-          <div className="hidden md:flex flex-col gap-1">
+          <div className="flex flex-col gap-1">
             <span className="font-mono text-[10px] text-suncoast-warm-gray uppercase tracking-widest">Playback Source</span>
             <select
               value={screen.deliveryMode ?? 'stream'}

@@ -2,7 +2,7 @@ import React from 'react';
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 import { useAppContext } from '../contexts/AppContext';
 import { dataService } from '../services/dataService';
-import { LayoutDashboard, MonitorPlay, FolderTree, Image as ImageIcon, Globe, BarChart3, Settings, Bell, Sun, LogOut } from 'lucide-react';
+import { LayoutDashboard, MonitorPlay, FolderTree, Image as ImageIcon, Globe, BarChart3, Settings, Sun, LogOut } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { TacticalPanel } from './TacticalPanel';
 
@@ -83,10 +83,6 @@ export default function Layout() {
             </div>
           </div>
           <div className="flex items-center gap-4">
-            <button className="p-2 text-suncoast-warm-gray hover:text-suncoast-gold transition-colors relative hover:bg-suncoast-elevated border border-transparent hover:border-suncoast-gold/20 rounded-none">
-              <Bell size={18} />
-              <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-none"></span>
-            </button>
             <button
               onClick={handleLogout}
               title="Sign out"

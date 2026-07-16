@@ -6,11 +6,12 @@
 # Setup on the Pi:
 #   sudo apt install cec-utils
 #   chmod +x pi-cec-agent.sh
-#   ./pi-cec-agent.sh http://<server>:8787 <screen-id>
+#   ./pi-cec-agent.sh https://your-app.workers.dev <screen-id>
+#   (for local testing use http://<server-ip>:8787 instead)
 #
 # Run it at boot by adding to /etc/rc.local (before "exit 0"), or as a
 # systemd service:
-#   /path/to/pi-cec-agent.sh http://<server>:8787 <screen-id> &
+#   /path/to/pi-cec-agent.sh https://your-app.workers.dev <screen-id> &
 #
 # The schedule itself is configured per screen in the admin dashboard
 # ("Screen Hours" on the screen's page). No schedule = TV stays on.
@@ -19,7 +20,8 @@ SERVER="$1"
 SCREEN_ID="$2"
 
 if [ -z "$SERVER" ] || [ -z "$SCREEN_ID" ]; then
-  echo "Usage: $0 http://<server>:8787 <screen-id>" >&2
+  echo "Usage: $0 <server-url> <screen-id>" >&2
+  echo "  e.g. $0 https://your-app.workers.dev abc123" >&2
   exit 1
 fi
 

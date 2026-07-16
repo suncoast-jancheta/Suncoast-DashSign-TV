@@ -193,6 +193,11 @@ class DataService {
     return this.request<Folder>('/api/folders', { method: 'POST', body: JSON.stringify({ name, parentId }) });
   }
 
+  /** Deletes the folder; its files and subfolders move up one level. */
+  async deleteFolder(id: string): Promise<void> {
+    await this.request(`/api/folders/${id}`, { method: 'DELETE' });
+  }
+
   // Websites
   async getWebsites(): Promise<Website[]> {
     return this.request<Website[]>('/api/websites');

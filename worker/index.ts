@@ -351,10 +351,15 @@ app.get('/api/player/:id', async (c) => {
     getTransition(c.env.DB),
   ]);
 
+  // Only ship what this screen's playlist actually uses — in download mode
+  // the device caches every file it receives, so sending the whole library
+  // would waste bandwidth and TV storage.
+  const playlistIds = new Set(screen.playlist.map((it) => it.sourceId));
+
   return c.json({
     screen,
-    content: (contentRows.results ?? []).map(rowToContent),
-    websites: websiteRows.results ?? [],
+    content: (contentRows.results ?? []).map(rowToContent).filter((m) => playlistIds.has(m.id as string)),
+    websites: (websiteRows.results ?? []).filter((w) => playlistIds.has(w.id as string)),
     settings: { transition },
     // Players schedule the playlist against this clock so every device on the
     // same link shows the same item at the same moment.
@@ -760,6 +765,20 @@ app.post('/api/folders', async (c) => {
   const id = generateId();
   await c.env.DB.prepare('INSERT INTO folders (id, name, parent_id) VALUES (?, ?, ?)').bind(id, body.name, body.parentId ?? null).run();
   return c.json({ id, name: body.name, parentId: body.parentId }, 201);
+});
+
+// Deleting a folder keeps its files: contents and subfolders move up to the
+// deleted folder's parent.
+app.delete('/api/folders/:id', async (c) => {
+  const id = c.req.param('id');
+  const row = await c.env.DB.prepare('SELECT parent_id FROM folders WHERE id = ?').bind(id).first<{ parent_id: string | null }>();
+  if (!row) return c.json({ error: 'Not found' }, 404);
+  await c.env.DB.batch([
+    c.env.DB.prepare('UPDATE content SET folder_id = ? WHERE folder_id = ?').bind(row.parent_id, id),
+    c.env.DB.prepare('UPDATE folders SET parent_id = ? WHERE parent_id = ?').bind(row.parent_id, id),
+    c.env.DB.prepare('DELETE FROM folders WHERE id = ?').bind(id),
+  ]);
+  return c.json({ ok: true });
 });
 
 // --- Websites ---------------------------------------------------------------------------

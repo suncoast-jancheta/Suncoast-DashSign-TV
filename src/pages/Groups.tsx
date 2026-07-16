@@ -15,6 +15,7 @@ export default function Groups() {
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [groupName, setGroupName] = useState('');
+  const [query, setQuery] = useState('');
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -47,6 +48,9 @@ export default function Groups() {
   };
 
   if (loading) return <div className="font-mono text-suncoast-warm-gray uppercase tracking-widest text-sm">Loading...</div>;
+
+  const q = query.trim().toLowerCase();
+  const visibleGroups = q ? groups.filter((g) => g.name.toLowerCase().includes(q)) : groups;
 
   return (
     <div className="space-y-6">
@@ -99,9 +103,11 @@ export default function Groups() {
         <div className="p-4 border-b border-white/5 flex items-center gap-4 bg-suncoast-elevated">
           <div className="relative flex-1 max-w-md">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-suncoast-warm-gray" size={16} />
-            <input 
-              type="text" 
-              placeholder="SEARCH GROUPS..." 
+            <input
+              type="text"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="SEARCH GROUPS..."
               className="w-full pl-10 pr-4 py-2 bg-suncoast-black border border-white/10 focus:outline-none focus:border-suncoast-gold font-mono text-xs uppercase tracking-widest text-white rounded-none placeholder:text-suncoast-warm-gray"
             />
           </div>
@@ -118,14 +124,16 @@ export default function Groups() {
               </tr>
             </thead>
             <tbody className="divide-y divide-white/5">
-              {groups.length === 0 ? (
+              {visibleGroups.length === 0 ? (
                 <tr>
                   <td colSpan={4} className="p-8 text-center font-mono text-sm text-suncoast-warm-gray uppercase tracking-widest">
-                    No groups yet. Create one, build its playlist, then assign screens in the group's Screens tab.
+                    {groups.length === 0
+                      ? "No groups yet. Create one, build its playlist, then assign screens in the group's Screens tab."
+                      : `No groups match "${query}".`}
                   </td>
                 </tr>
               ) : (
-                groups.map((group) => {
+                visibleGroups.map((group) => {
                   const memberCount = screens.filter(s => s.groupId === group.id).length;
                   
                   return (

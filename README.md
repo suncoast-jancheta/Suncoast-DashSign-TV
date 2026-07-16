@@ -43,7 +43,8 @@ port supports CEC out of the box):
 # On the Raspberry Pi that drives the TV:
 sudo apt install cec-utils
 chmod +x scripts/pi-cec-agent.sh
-./scripts/pi-cec-agent.sh http://<server>:8787 <screen-id> &
+./scripts/pi-cec-agent.sh https://<your-worker>.workers.dev <screen-id> &
+# (local testing: use http://<your-computer-ip>:8787 instead)
 ```
 
 The agent asks the server `GET /api/player/<screen-id>/power?time=HH:MM`

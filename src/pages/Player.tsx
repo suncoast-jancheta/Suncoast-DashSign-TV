@@ -57,6 +57,10 @@ export default function Player() {
   const [localUrls, setLocalUrls] = useState<Record<string, string>>({});
   const localUrlsRef = useRef(localUrls);
   localUrlsRef.current = localUrls;
+  // Small on-screen badge so it's visible that files are being saved to the
+  // device (and briefly confirms when the offline copy is complete).
+  const [downloadProgress, setDownloadProgress] = useState<{ done: number; total: number } | null>(null);
+  const downloadedAtRef = useRef<number | null>(null);
 
   // Poll the server: acts as the heartbeat (Online status) and picks up
   // playlist/content changes made in the admin without reloading the TV.
@@ -91,9 +95,13 @@ export default function Player() {
     return () => clearInterval(t);
   }, []);
 
-  // Download-to-device: prefetch every media file once and play it locally.
+  // Download-to-device: fetch each playlist file once, keep it on the device,
+  // and play the local copy — playback loops then use no bandwidth at all.
   useEffect(() => {
-    if (!data || data.screen.deliveryMode !== 'download') return;
+    if (!data || data.screen.deliveryMode !== 'download') {
+      setDownloadProgress(null);
+      return;
+    }
     let cancelled = false;
 
     (async () => {
@@ -105,9 +113,40 @@ export default function Player() {
       } catch {
         cache = null;
       }
-      for (const m of data.content) {
+
+      // Only this screen's playlist — never the whole content library.
+      const playlistIds = new Set((data.screen.playlist ?? []).map((it) => it.sourceId));
+      const wanted = data.content.filter((m) => playlistIds.has(m.id) && m.url);
+
+      // Free up TV storage: drop cached files the playlist no longer uses.
+      if (cache) {
+        try {
+          const wantedUrls = new Set(wanted.map((m) => new URL(m.url, window.location.origin).href));
+          for (const req of await cache.keys()) {
+            if (!wantedUrls.has(req.url)) await cache.delete(req);
+          }
+        } catch {
+          // pruning is best-effort
+        }
+      }
+      for (const [id, objectUrl] of Object.entries(localUrlsRef.current)) {
+        if (!playlistIds.has(id)) {
+          URL.revokeObjectURL(objectUrl);
+          setLocalUrls((prev) => {
+            const next = { ...prev };
+            delete next[id];
+            return next;
+          });
+        }
+      }
+
+      const missing = wanted.filter((m) => !localUrlsRef.current[m.id]);
+      if (missing.length === 0) return; // everything already on the device
+      let done = wanted.length - missing.length;
+      setDownloadProgress({ done, total: wanted.length });
+
+      for (const m of missing) {
         if (cancelled) return;
-        if (localUrlsRef.current[m.id] || !m.url) continue;
         try {
           let res: Response | undefined = cache ? await cache.match(m.url) : undefined;
           if (!res) {
@@ -126,9 +165,15 @@ export default function Player() {
           if (cancelled) return;
           const objectUrl = URL.createObjectURL(blob);
           setLocalUrls((prev) => ({ ...prev, [m.id]: objectUrl }));
+          done++;
+          setDownloadProgress({ done, total: wanted.length });
         } catch {
           // network hiccup — this item keeps streaming until the next pass
         }
+      }
+      if (!cancelled) {
+        downloadedAtRef.current = Date.now();
+        setDownloadProgress(null);
       }
     })();
 
@@ -254,6 +299,14 @@ export default function Player() {
           {alert!.message}
         </div>
       )}
+      {data.screen.deliveryMode === 'download' &&
+        (downloadProgress || (downloadedAtRef.current !== null && Date.now() - downloadedAtRef.current < 6000)) && (
+          <div className="absolute top-3 right-3 bg-black/70 border border-white/20 px-3 py-1.5 font-mono text-[10px] text-white/80 uppercase tracking-widest">
+            {downloadProgress
+              ? `Saving to device ${downloadProgress.done}/${downloadProgress.total}`
+              : 'Offline copy ready — playing from device storage'}
+          </div>
+        )}
     </div>
   );
 }

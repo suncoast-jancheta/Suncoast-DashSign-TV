@@ -15,12 +15,23 @@ export default function Screens() {
   const [groups, setGroups] = useState<ScreenGroup[]>([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [pairingCode, setPairingCode] = useState('');
   const [screenName, setScreenName] = useState('');
+  const [query, setQuery] = useState('');
   const navigate = useNavigate();
 
   useEffect(() => {
     load();
+    // Keep Online/Offline live — players check in every 30s.
+    const t = setInterval(async () => {
+      try {
+        const [s, g] = await Promise.all([dataService.getScreens(), dataService.getGroups()]);
+        setScreens(s);
+        setGroups(g);
+      } catch {
+        // transient network error — next tick will retry
+      }
+    }, 30_000);
+    return () => clearInterval(t);
   }, []);
 
   async function load() {
@@ -40,15 +51,15 @@ export default function Screens() {
   const handleAddScreen = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    await dataService.createScreen({
+    const created = await dataService.createScreen({
       name: screenName,
       deviceType: 'Web Player',
       orientation: 'landscape',
     });
     setIsModalOpen(false);
-    setPairingCode('');
     setScreenName('');
-    await load();
+    // Go straight to the new screen so its player link/QR is right there.
+    navigate(`/screens/${created.id}`);
   };
 
   if (loading) return <div className="font-mono text-suncoast-warm-gray uppercase tracking-widest text-sm">Loading screens...</div>;
@@ -60,6 +71,14 @@ export default function Screens() {
       default: return 'bg-suncoast-elevated text-suncoast-warm-gray border-white/10';
     }
   };
+
+  const q = query.trim().toLowerCase();
+  const visibleScreens = q
+    ? screens.filter((s) => {
+        const groupName = s.groupId ? groups.find((g) => g.id === s.groupId)?.name ?? '' : '';
+        return s.name.toLowerCase().includes(q) || groupName.toLowerCase().includes(q);
+      })
+    : screens;
 
   return (
     <div className="space-y-6">
@@ -77,39 +96,30 @@ export default function Screens() {
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
           <TacticalPanel className="w-full max-w-md overflow-hidden flex flex-col z-50 shadow-2xl">
             <div className="p-4 border-b border-suncoast-gold/20 flex justify-between items-center bg-suncoast-elevated">
-              <h2 className="font-display font-black text-white uppercase tracking-wide-ds text-sm">Pair New Screen</h2>
+              <h2 className="font-display font-black text-white uppercase tracking-wide-ds text-sm">Add Screen</h2>
               <button onClick={() => setIsModalOpen(false)} className="text-suncoast-warm-gray hover:text-white transition-colors">
                 <X size={20} />
               </button>
             </div>
             <form onSubmit={handleAddScreen} className="p-6 space-y-4">
               <div>
-                <label className="block font-mono text-[10px] text-suncoast-warm-gray uppercase tracking-widest mb-1">Pairing Code</label>
-                <input 
-                  type="text" 
-                  required
-                  maxLength={6}
-                  value={pairingCode}
-                  onChange={e => setPairingCode(e.target.value.toUpperCase())}
-                  placeholder="e.g. A1B2C3" 
-                  className="w-full px-3 py-2 bg-suncoast-black border border-suncoast-gold/20 focus:outline-none focus:border-suncoast-gold font-mono text-center tracking-widest uppercase text-white rounded-none"
-                />
-                <p className="font-mono text-[10px] text-suncoast-warm-gray mt-2">Enter the 6-character code displayed on the screen.</p>
-              </div>
-              <div>
                 <label className="block font-mono text-[10px] text-suncoast-warm-gray uppercase tracking-widest mb-1">Screen Name</label>
-                <input 
-                  type="text" 
+                <input
+                  type="text"
                   required
+                  autoFocus
                   value={screenName}
                   onChange={e => setScreenName(e.target.value)}
-                  placeholder="e.g. Lobby Entrance" 
+                  placeholder="e.g. Lobby Entrance"
                   className="w-full px-3 py-2 bg-suncoast-black border border-suncoast-gold/20 focus:outline-none focus:border-suncoast-gold text-white rounded-none font-sans text-sm"
                 />
+                <p className="font-mono text-[10px] text-suncoast-warm-gray mt-2 leading-relaxed">
+                  After adding, you'll get a player link and QR code — open it in the browser on any TV and that TV becomes this screen.
+                </p>
               </div>
               <div className="pt-4 flex justify-end gap-3 border-t border-white/5 mt-4">
                 <TacticalButton type="button" variant="secondary" onClick={() => setIsModalOpen(false)}>Cancel</TacticalButton>
-                <TacticalButton type="submit">Pair Screen</TacticalButton>
+                <TacticalButton type="submit">Add Screen</TacticalButton>
               </div>
             </form>
           </TacticalPanel>
@@ -120,9 +130,11 @@ export default function Screens() {
         <div className="p-4 border-b border-white/5 flex items-center gap-4 bg-suncoast-elevated">
           <div className="relative flex-1 max-w-md">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-suncoast-warm-gray" size={16} />
-            <input 
-              type="text" 
-              placeholder="SEARCH SCREENS..." 
+            <input
+              type="text"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="SEARCH SCREENS..."
               className="w-full pl-10 pr-4 py-2 bg-suncoast-black border border-white/10 focus:outline-none focus:border-suncoast-gold font-mono text-xs uppercase tracking-widest text-white rounded-none placeholder:text-suncoast-warm-gray"
             />
           </div>
@@ -141,14 +153,16 @@ export default function Screens() {
               </tr>
             </thead>
             <tbody className="divide-y divide-white/5">
-              {screens.length === 0 ? (
+              {visibleScreens.length === 0 ? (
                 <tr>
                   <td colSpan={6} className="p-8 text-center font-mono text-sm text-suncoast-warm-gray uppercase tracking-widest">
-                    No screens paired yet. Click "Add Screen" to get started.
+                    {screens.length === 0
+                      ? 'No screens yet. Click "Add Screen" to get started.'
+                      : `No screens match "${query}".`}
                   </td>
                 </tr>
               ) : (
-                screens.map((screen) => {
+                visibleScreens.map((screen) => {
                   const group = screen.groupId ? groups.find(g => g.id === screen.groupId) : null;
                   
                   return (
