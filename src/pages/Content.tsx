@@ -37,6 +37,9 @@ export default function Content() {
   const [currentFolderId, setCurrentFolderId] = useState<string | undefined>();
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [isDragging, setIsDragging] = useState(false);
+  const [folderModalOpen, setFolderModalOpen] = useState(false);
+  const [newFolderName, setNewFolderName] = useState('');
+  const [creatingFolder, setCreatingFolder] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -96,22 +99,34 @@ export default function Content() {
     await uploadFiles(Array.from(e.dataTransfer.files) as File[]);
   };
 
+  const openFilePicker = () => {
+    const input = fileInputRef.current;
+    if (!input) return;
+    input.value = ''; // let the same file be re-picked after a failed try
+    input.click();
+  };
+
   const handleFilePick = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files ?? []);
     e.target.value = ''; // allow re-selecting the same file later
     if (files.length > 0) await uploadFiles(files);
   };
 
-  const handleNewFolder = async () => {
-    const name = window.prompt('Folder name:');
-    if (!name?.trim()) return;
+  const handleCreateFolder = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const name = newFolderName.trim();
+    if (!name || creatingFolder) return;
+    setCreatingFolder(true);
     try {
-      await dataService.createFolder(name.trim(), currentFolderId);
-      toast(`Folder "${name.trim()}" created`, 'success');
+      await dataService.createFolder(name, currentFolderId);
+      toast(`Folder "${name}" created`, 'success');
+      setNewFolderName('');
+      setFolderModalOpen(false);
       await load();
     } catch (e) {
       toast(e instanceof Error ? e.message : 'Failed to create folder', 'error');
     }
+    setCreatingFolder(false);
   };
 
   const handleDeleteFolder = async (folder: Folder) => {
@@ -163,11 +178,11 @@ export default function Content() {
               Delete ({selectedIds.size})
             </TacticalButton>
           )}
-          <TacticalButton variant="secondary" onClick={handleNewFolder}>
+          <TacticalButton variant="secondary" type="button" onClick={() => { setNewFolderName(''); setFolderModalOpen(true); }}>
             <FolderPlus size={16} />
             New Folder
           </TacticalButton>
-          <TacticalButton onClick={() => fileInputRef.current?.click()} disabled={uploading}>
+          <TacticalButton type="button" onClick={openFilePicker} disabled={uploading}>
             <Upload size={16} />
             {uploading ? 'Uploading...' : 'Upload'}
           </TacticalButton>
@@ -177,7 +192,8 @@ export default function Content() {
             multiple
             accept="image/*,video/*"
             onChange={handleFilePick}
-            className="hidden"
+            className="sr-only"
+            tabIndex={-1}
           />
         </div>
       </div>
@@ -310,6 +326,42 @@ export default function Content() {
           )}
         </div>
       </TacticalPanel>
+
+      {folderModalOpen && (
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
+          <TacticalPanel className="w-full max-w-md overflow-hidden flex flex-col z-50 shadow-2xl">
+            <div className="p-4 border-b border-suncoast-gold/20 flex justify-between items-center bg-suncoast-elevated">
+              <h2 className="font-display font-black text-white uppercase tracking-wide-ds text-sm">New Folder</h2>
+              <button onClick={() => setFolderModalOpen(false)} className="text-suncoast-warm-gray hover:text-white transition-colors">
+                <X size={20} />
+              </button>
+            </div>
+            <form onSubmit={handleCreateFolder} className="p-6 space-y-4">
+              <div>
+                <label className="block font-mono text-[10px] text-suncoast-warm-gray uppercase tracking-widest mb-1">Folder Name</label>
+                <input
+                  type="text"
+                  required
+                  autoFocus
+                  value={newFolderName}
+                  onChange={(e) => setNewFolderName(e.target.value)}
+                  placeholder="e.g. Promotions"
+                  className="w-full px-3 py-2 bg-suncoast-black border border-suncoast-gold/20 focus:outline-none focus:border-suncoast-gold text-white rounded-none font-sans text-sm"
+                />
+                {currentFolderId && (
+                  <p className="font-mono text-[10px] text-suncoast-warm-gray mt-2">
+                    Created inside "{folders.find((f) => f.id === currentFolderId)?.name}".
+                  </p>
+                )}
+              </div>
+              <div className="pt-4 flex justify-end gap-3 border-t border-white/5 mt-4">
+                <TacticalButton type="button" variant="secondary" onClick={() => setFolderModalOpen(false)}>Cancel</TacticalButton>
+                <TacticalButton type="submit" disabled={creatingFolder}>{creatingFolder ? 'Creating...' : 'Create Folder'}</TacticalButton>
+              </div>
+            </form>
+          </TacticalPanel>
+        </div>
+      )}
     </div>
   );
 }

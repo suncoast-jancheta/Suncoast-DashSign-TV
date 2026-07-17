@@ -5,9 +5,10 @@ interface TacticalButtonProps extends React.ButtonHTMLAttributes<HTMLButtonEleme
   variant?: 'primary' | 'secondary' | 'danger';
 }
 
-export function TacticalButton({ children, className, variant = 'primary', ...props }: TacticalButtonProps) {
+export function TacticalButton({ children, className, variant = 'primary', type = 'button', ...props }: TacticalButtonProps) {
   return (
     <button
+      type={type}
       className={cn(
         "font-mono text-xs uppercase tracking-widest rounded-none border transition-colors flex items-center justify-center gap-2 px-4 py-2 disabled:opacity-50 disabled:cursor-not-allowed",
         variant === 'primary' && "border-suncoast-gold text-suncoast-gold hover:bg-suncoast-gold/20",
